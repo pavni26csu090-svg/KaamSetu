@@ -5,9 +5,22 @@ import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { INITIAL_OPPORTUNITIES } from './src/data/sampleData';
 import { promises as fs } from 'node:fs';
-
-
+import { createClient } from '@supabase/supabase-js';
+import multer from 'multer';
+import { randomUUID } from 'node:crypto';
 dotenv.config();
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
+
+const supabase =
+  supabaseUrl && supabaseSecretKey
+    ? createClient(supabaseUrl, supabaseSecretKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false
+        }
+      })
+    : null;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,7 +38,35 @@ const app = express();
 const PORT = getPort();
 
 app.use(express.json());
+app.get('/api/supabase-health', async (_req: Request, res: Response) => {
+  if (!supabase) {
+    return res.status(503).json({
+      success: false,
+      error: 'Supabase is not configured'
+    });
+  }
 
+  const { error } = await supabase
+    .from('applications')
+    .select('id')
+    .limit(1);
+
+  
+if (error) {
+  console.error('Supabase health check failed:', error.message);
+
+  return res.status(500).json({
+    success: false,
+    error: error.message,
+    code: error.code
+  });
+}
+
+  return res.json({
+    success: true,
+    database: 'connected'
+  });
+});
 
 app.get('/api/opportunities', (req: Request, res: Response) => {
   const { search, type, location } = req.query;
@@ -115,9 +156,88 @@ app.get('/api/applications', (_req: Request, res: Response) => {
   });
 });
 
+
+const resumeUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+
+    if (!allowedTypes.includes(file.mimetype)) {
+      return cb(new Error('Only PDF and DOCX resumes are allowed.'));
+    }
+
+    cb(null, true);
+  },
+});
+
+app.post(
+  '/api/resumes',
+  resumeUpload.single('resume'),
+  async (req: Request, res: Response) => {
+    if (!supabase) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database is not configured.',
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please select a resume.',
+      });
+    }
+
+    const extension =
+      req.file.mimetype === 'application/pdf' ? 'pdf' : 'docx';
+
+    const filePath = `${randomUUID()}.${extension}`;
+
+    const { error } = await supabase.storage
+      .from('resumes')
+      .upload(filePath, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false,
+      });
+
+    if (error) {
+      console.error('Resume upload failed:', error.message);
+      return res.status(500).json({
+        success: false,
+        error: 'Could not upload resume.',
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Resume uploaded to private storage.',
+      resumePath: filePath,
+    });
+  }
+);
+
+
 // Submit a demo application
 app.post('/api/applications', async (req: Request, res: Response) => {
-  const { opportunityId, applicantName, notes } = req.body ?? {};
+  if (!supabase) {
+    return res.status(503).json({
+      success: false,
+      error: 'Database is not configured.',
+    });
+  }
+
+  const {
+  opportunityId,
+  applicantName,
+  applicantEmail,
+  notes,
+  portfolioUrl,
+  resumePath
+} = req.body ?? {};
 
   if (
     typeof opportunityId !== 'string' ||
@@ -142,47 +262,67 @@ app.post('/api/applications', async (req: Request, res: Response) => {
     });
   }
 
-  if (demoApplications.some(
-    (app) =>
-      app.opportunityId === opportunityId &&
-      app.applicantName.toLowerCase() === applicantName.trim().toLowerCase()
-  )) {
+  const { data: existing, error: lookupError } = await supabase
+    .from('applications')
+    .select('id')
+    .eq('opportunity_id', opportunityId)
+    .ilike('applicant_name', applicantName.trim())
+    .limit(1);
+
+  if (lookupError) {
+  console.error('Application lookup failed:', lookupError.message);
+  return res.status(500).json({
+    success: false,
+    error: lookupError.message,
+    code: lookupError.code,
+  });
+}
+
+  if (existing && existing.length > 0) {
     return res.status(409).json({
       success: false,
       error: 'Demo application already submitted for this opportunity.',
     });
   }
 
-  const application: DemoApplication = {
-    id: `app-${Date.now()}`,
-    opportunityId,
-    opportunityTitle: opportunity.title,
-    organization: opportunity.organization,
-    applicantName: applicantName.trim(),
-    notes: typeof notes === 'string' ? notes.trim() : '',
-    status: 'submitted',
-    appliedAt: new Date().toISOString(),
-  };
+  const { data, error } = await supabase
+    .from('applications')
+    .insert({
+      opportunity_id: opportunityId,
+      opportunity_title: opportunity.title,
+      applicant_name: applicantName.trim(),
+      applicant_email: typeof applicantEmail === 'string' ? applicantEmail.trim() : null,
+      notes: typeof notes === 'string' ? notes.trim() : '',
+      portfolio_url: typeof portfolioUrl === 'string' ? portfolioUrl.trim() : null,
+      status: 'submitted',
+      resume_path: typeof resumePath === 'string' ? resumePath : null,
+    })
+    .select()
+    .single();
 
-  demoApplications.push(application);
-  
-  try {
-    await saveApplications();
-  } catch (error) {
-    console.error('Failed to save application:', error);
+  if (error) {
+    console.error('Supabase insert failed:', error.message);
     return res.status(500).json({
       success: false,
       error: 'Could not save application.',
     });
   }
 
-
   return res.status(201).json({
     success: true,
-    message: 'Demo application submitted successfully.',
-    application,
+    message: 'Demo application saved successfully.',
+    application: {
+      id: data.id,
+      opportunityId: data.opportunity_id,
+      opportunityTitle: data.opportunity_title,
+      applicantName: data.applicant_name,
+      notes: data.notes,
+      status: data.status,
+      appliedAt: data.created_at,
+    },
   });
 });
+
 
 
 // Initialize Google GenAI client if key is configured
