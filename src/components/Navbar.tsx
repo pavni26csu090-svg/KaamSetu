@@ -11,12 +11,12 @@ export const Navbar: React.FC = () => {
   };
 
   const navItems = [
-    { id: 'landing', label: language === 'hi' ? 'होम' : 'Home', icon: Compass },
-    { id: 'opportunities', label: t.navOpportunities, icon: Compass },
-    { id: 'skillbridge', label: t.navSkillBridge, icon: BookOpen },
-    { id: 'ai_companion', label: t.navAICompanion, icon: Sparkles },
-    { id: 'business_hub', label: t.navBusinessHub, icon: Store },
-    { id: 'dashboard', label: language === 'hi' ? 'डेमो डैशबोर्ड' : 'Demo Dashboard', icon: LayoutDashboard },
+    { id: 'landing', label: t('navbar.home'), icon: Compass },
+    { id: 'opportunities', label: t('navbar.opportunities'), icon: Compass },
+    { id: 'skillbridge', label: t('navbar.skillbridge'), icon: BookOpen },
+    { id: 'ai_companion', label: t('navbar.aiCompanion'), icon: Sparkles },
+    { id: 'business_hub', label: t('navbar.businessHub'), icon: Store },
+    { id: 'dashboard', label: t('navbar.demoDashboard'), icon: LayoutDashboard },
   ];
 
   const handleNavClick = (viewId: string) => {
@@ -97,9 +97,9 @@ export const Navbar: React.FC = () => {
                   ? 'bg-amber-100 text-amber-900 border border-amber-300'
                   : 'text-stone-600 hover:bg-stone-100'
               }`}
-              title="Toggle simple everyday phrasing mode"
+              title={t('navbar.simpleTextMode')}
             >
-              {profile.accessibility?.simplifiedLanguage ? 'Simplified: ON' : 'Simple Mode'}
+              {profile.accessibility?.simplifiedLanguage ? t('common.simplifiedActive') : t('common.simpleMode')}
             </button>
 
             {/* Primary Action Button */}
@@ -108,7 +108,7 @@ export const Navbar: React.FC = () => {
               className="px-3.5 py-2 text-xs font-semibold text-white bg-[#134E3F] hover:bg-[#0E3B30] rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-sm"
             >
               <User className="w-3.5 h-3.5" />
-              <span>{profile.name ? profile.name.split(' ')[0] : t.ctaFindPathway}</span>
+              <span>{profile.name ? profile.name.split(' ')[0] : t('navbar.findPathway')}</span>
             </button>
 
             {/* Mobile Menu Button */}
@@ -156,7 +156,7 @@ export const Navbar: React.FC = () => {
               }
               className="text-xs text-stone-600 py-1.5 px-2 hover:bg-stone-100 rounded"
             >
-              Simple Text: {profile.accessibility.simplifiedLanguage ? 'Enabled' : 'Disabled'}
+              {t('navbar.simpleTextMode')}: {profile.accessibility.simplifiedLanguage ? t('common.active') : t('common.no')}
             </button>
             <button
               onClick={() => {
@@ -165,7 +165,7 @@ export const Navbar: React.FC = () => {
               }}
               className="text-xs text-[#134E3F] font-semibold py-1.5 px-2 hover:bg-stone-100 rounded"
             >
-              Edit Profile Settings
+              {t('navbar.editProfile')}
             </button>
           </div>
         </div>

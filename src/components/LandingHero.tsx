@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { VoiceInputButton } from './VoiceInputButton';
 import { Opportunity } from '../types';
+import { getLocalizedOpp } from '../utils/localization';
 
 import heroImage from '../assets/images/hero_kaamsetu_pathway_1793163269221.jpg';
 import skillsLabImage from '../assets/images/community_skills_lab_1793163269258.jpg';
@@ -32,6 +33,8 @@ export const LandingHero: React.FC = () => {
     setSelectedOpportunityForDetail,
     navigateToAudience,
     profile,
+    language,
+    t,
   } = useApp();
 
   const [roleQuery, setRoleQuery] = useState('');
@@ -68,19 +71,19 @@ export const LandingHero: React.FC = () => {
             <div className="lg:col-span-7 space-y-5">
               {/* Quiet Domain Kicker */}
               <div className="flex items-center gap-2 text-xs font-semibold text-[#134E3F] tracking-wide uppercase">
-                <span>Inclusive Employment-Tech for Bharat</span>
+                <span>{t('hero.kicker')}</span>
                 <span aria-hidden="true">·</span>
-                <span className="text-stone-500 font-normal">Skills &amp; Opportunities for All</span>
+                <span className="text-stone-500 font-normal">{t('hero.subkicker')}</span>
               </div>
 
               {/* Exact Required Headline */}
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-stone-900 leading-[1.15] text-balance">
-                Opportunities should be open to everyone.
+                {t('hero.headline')}
               </h1>
 
               {/* Exact Required Supporting Text */}
               <p className="text-base sm:text-lg text-stone-600 leading-relaxed max-w-2xl">
-                Find meaningful work, build practical skills, and grow your future — wherever you start.
+                {t('hero.subtext')}
               </p>
 
               {/* Prominent Search Bar with Role & Location fields */}
@@ -93,7 +96,7 @@ export const LandingHero: React.FC = () => {
                       type="text"
                       value={roleQuery}
                       onChange={(e) => setRoleQuery(e.target.value)}
-                      placeholder="Search jobs, skills, or opportunities"
+                      placeholder={t('common.searchPlaceholder')}
                       className="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm bg-stone-50/80 border border-stone-200 rounded-xl focus:outline-none focus:border-[#134E3F] focus:bg-white transition-colors"
                     />
                   </div>
@@ -105,7 +108,7 @@ export const LandingHero: React.FC = () => {
                       type="text"
                       value={locationQuery}
                       onChange={(e) => setLocationQuery(e.target.value)}
-                      placeholder="Location (Pune, Remote...)"
+                      placeholder={t('common.locationPlaceholder')}
                       className="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm bg-stone-50/80 border border-stone-200 rounded-xl focus:outline-none focus:border-[#134E3F] focus:bg-white transition-colors"
                     />
                   </div>
@@ -125,15 +128,18 @@ export const LandingHero: React.FC = () => {
                       type="submit"
                       className="flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#134E3F] hover:bg-[#0E3B30] rounded-xl transition-colors whitespace-nowrap shadow-sm"
                     >
-                      Search
+                      {t('common.search')}
                     </button>
                   </div>
                 </form>
 
                 {/* Popular Tags */}
                 <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px] text-stone-500">
-                  <span className="font-medium text-stone-600">Popular:</span>
-                  {['Web Developer Intern', 'Solar Installation', 'Vernacular Content', 'Local Inventory', 'Remote'].map((tag) => (
+                  <span className="font-medium text-stone-600">{t('common.popular')}</span>
+                  {(language === 'hi'
+                    ? ['वेब डेवलपर इंटर्न', 'सोलर इंस्टालेशन', 'मातृभाषा सामग्री', 'इन्वेंटरी', 'रिमोट']
+                    : ['Web Developer Intern', 'Solar Installation', 'Vernacular Content', 'Local Inventory', 'Remote']
+                  ).map((tag) => (
                     <button
                       key={tag}
                       type="button"
@@ -152,7 +158,7 @@ export const LandingHero: React.FC = () => {
                   onClick={() => setCurrentView('opportunities')}
                   className="px-5 py-3 text-xs sm:text-sm font-semibold text-white bg-[#134E3F] hover:bg-[#0E3B30] rounded-xl transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
                 >
-                  <span>Explore Opportunities</span>
+                  <span>{t('hero.exploreCTA')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
 
@@ -160,7 +166,7 @@ export const LandingHero: React.FC = () => {
                   onClick={() => setCurrentView('skillbridge')}
                   className="px-5 py-3 text-xs sm:text-sm font-semibold text-stone-800 bg-white hover:bg-stone-50 border border-stone-300 rounded-xl transition-colors whitespace-nowrap shadow-2xs"
                 >
-                  Build My Skills
+                  {t('hero.buildSkillsCTA')}
                 </button>
 
                 {/* Direct Demo Dashboard Link */}
@@ -170,7 +176,7 @@ export const LandingHero: React.FC = () => {
                   title="View the active demo applicant dashboard for Pooja Sharma"
                 >
                   <LayoutDashboard className="w-3.5 h-3.5 text-amber-700" />
-                  <span>Demo Dashboard ({profile.name.split(' ')[0]})</span>
+                  <span>{t('hero.demoDashboardCTA')}</span>
                 </button>
               </div>
 
@@ -178,15 +184,15 @@ export const LandingHero: React.FC = () => {
               <div className="pt-2 border-t border-stone-200/70 flex flex-wrap items-center gap-4 text-xs text-stone-600">
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#134E3F]" />
-                  <span>Verified Skill Challenges</span>
+                  <span>{t('hero.trustVerified')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#134E3F]" />
-                  <span>English &amp; हिन्दी Bilinguality</span>
+                  <span>{t('hero.trustBilingual')}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#134E3F]" />
-                  <span>Zero Barrier to Practical Entry</span>
+                  <span>{t('hero.trustZeroBarrier')}</span>
                 </div>
               </div>
             </div>
@@ -202,9 +208,9 @@ export const LandingHero: React.FC = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-900/60 via-transparent to-transparent pointer-events-none" />
                 <div className="absolute bottom-4 left-4 right-4 text-white text-xs">
-                  <p className="font-semibold text-white">KaamSetu Unified Pathway</p>
+                  <p className="font-semibold text-white">{t('hero.visualCaptionTitle')}</p>
                   <p className="text-white/80 text-[11px] mt-0.5">
-                    Connecting emerging talent and local businesses across Tier 1, 2 &amp; 3 India
+                    {t('hero.visualCaptionSub')}
                   </p>
                 </div>
               </div>
@@ -217,13 +223,13 @@ export const LandingHero: React.FC = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-8">
           <p className="text-xs font-semibold text-[#134E3F] uppercase tracking-wider mb-1">
-            Choose Your Pathway
+            {t('audience.sectionKicker')}
           </p>
           <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
-            Tailored tools for every ambition
+            {t('audience.sectionTitle')}
           </h2>
           <p className="text-xs sm:text-sm text-stone-600 mt-1">
-            Click on any card to access customized opportunities, skill challenges, or business hubs.
+            {t('audience.sectionSubtext')}
           </p>
         </div>
 
@@ -241,18 +247,18 @@ export const LandingHero: React.FC = () => {
                 <GraduationCap className="w-5 h-5" />
               </div>
               <h3 className="text-base font-bold text-stone-900 mb-1 group-hover:text-[#134E3F] transition-colors">
-                Students
+                {t('audience.studentsTitle')}
               </h3>
               <p className="text-xs font-medium text-blue-900 mb-2">
-                Find internships and entry-level jobs.
+                {t('audience.studentsTag')}
               </p>
               <p className="text-xs text-stone-600 leading-relaxed">
-                Discover part-time tech internships, research opportunities, and flexible student-friendly positions that respect college hours.
+                {t('audience.studentsDesc')}
               </p>
             </div>
 
             <div className="mt-5 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-semibold text-[#134E3F] group-hover:text-[#0E3B30]">
-              <span>Explore Student Roles</span>
+              <span>{t('audience.studentsCTA')}</span>
               <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
@@ -270,18 +276,18 @@ export const LandingHero: React.FC = () => {
                 <Users className="w-5 h-5" />
               </div>
               <h3 className="text-base font-bold text-stone-900 mb-1 group-hover:text-[#134E3F] transition-colors">
-                Underserved communities
+                {t('audience.underservedTitle')}
               </h3>
               <p className="text-xs font-medium text-emerald-900 mb-2">
-                Discover accessible local work and training.
+                {t('audience.underservedTag')}
               </p>
               <p className="text-xs text-stone-600 leading-relaxed">
-                Find inclusive, dignified work with equipment provided, vernacular language support, and no formal degree barriers.
+                {t('audience.underservedDesc')}
               </p>
             </div>
 
             <div className="mt-5 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-semibold text-[#134E3F] group-hover:text-[#0E3B30]">
-              <span>Discover Accessible Work</span>
+              <span>{t('audience.underservedCTA')}</span>
               <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
@@ -299,18 +305,18 @@ export const LandingHero: React.FC = () => {
                 <Compass className="w-5 h-5" />
               </div>
               <h3 className="text-base font-bold text-stone-900 mb-1 group-hover:text-[#134E3F] transition-colors">
-                Career seekers
+                {t('audience.careerSeekersTitle')}
               </h3>
               <p className="text-xs font-medium text-amber-900 mb-2">
-                Explore career paths and build skills.
+                {t('audience.careerSeekersTag')}
               </p>
               <p className="text-xs text-stone-600 leading-relaxed">
-                Analyze your missing skills for target roles, complete hands-on SkillBridge challenges, and generate demonstrable portfolio evidence.
+                {t('audience.careerSeekersDesc')}
               </p>
             </div>
 
             <div className="mt-5 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-semibold text-amber-800 group-hover:text-amber-900">
-              <span>Build Practical Skills</span>
+              <span>{t('audience.careerSeekersCTA')}</span>
               <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
@@ -328,38 +334,38 @@ export const LandingHero: React.FC = () => {
                 <Store className="w-5 h-5" />
               </div>
               <h3 className="text-base font-bold text-stone-900 mb-1 group-hover:text-[#134E3F] transition-colors">
-                Small businesses
+                {t('audience.businessTitle')}
               </h3>
               <p className="text-xs font-medium text-teal-900 mb-2">
-                Post opportunities and discover talent.
+                {t('audience.businessTag')}
               </p>
               <p className="text-xs text-stone-600 leading-relaxed">
-                Showcase local craft services, receive simulated customer inquiries, and hire short-term neighborhood assistants for seasonal demands.
+                {t('audience.businessDesc')}
               </p>
             </div>
 
             <div className="mt-5 pt-3 border-t border-stone-100 flex items-center justify-between text-xs font-semibold text-teal-800 group-hover:text-teal-900">
-              <span>Manage Business Hub</span>
+              <span>{t('audience.businessCTA')}</span>
               <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. Compact Featured Opportunities Section (Core Requirement) */}
+      {/* 3. Compact Featured Opportunities Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
-                Featured Opportunities
+                {t('featured.sectionTitle')}
               </h2>
               <span className="px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-800 rounded text-[10px] font-semibold">
-                Demo Sample Listings
+                {t('featured.badge')}
               </span>
             </div>
             <p className="text-xs text-stone-600 mt-0.5">
-              Curated roles with realistic stipends, flexible working modes, and practical requirements.
+              {t('featured.subtext')}
             </p>
           </div>
 
@@ -367,89 +373,94 @@ export const LandingHero: React.FC = () => {
             onClick={() => setCurrentView('opportunities')}
             className="text-xs font-semibold text-[#134E3F] hover:text-[#0E3B30] flex items-center gap-1 self-start sm:self-auto hover:underline"
           >
-            <span>View All Opportunities ({opportunities.length})</span>
+            <span>{t('featured.viewAll')} ({opportunities.length})</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {/* 3 Compact Listing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {featuredOpportunities.map((opp) => (
-            <div
-              key={opp.id}
-              className="bg-white border border-stone-200/90 rounded-2xl p-5 hover:border-stone-400 hover:shadow-xs transition-all flex flex-col justify-between"
-            >
-              <div className="space-y-3">
-                {/* Unboxed Metadata Header */}
-                <div className="flex items-center justify-between text-xs text-stone-500">
-                  <span className="font-semibold text-stone-700 capitalize">
-                    {opp.type.replace('_', ' ')}
-                  </span>
-                  <span aria-hidden="true">·</span>
-                  <span className="capitalize">{opp.workMode}</span>
-                  <span aria-hidden="true">·</span>
-                  <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">Demo Data</span>
-                </div>
-
-                {/* Title & Organization */}
-                <div>
-                  <h3
-                    onClick={() => handleViewDetails(opp)}
-                    className="text-sm sm:text-base font-bold text-stone-900 hover:text-[#134E3F] transition-colors cursor-pointer"
-                  >
-                    {opp.title}
-                  </h3>
-                  <div className="flex items-center gap-2 text-xs text-stone-600 mt-1">
-                    <span className="flex items-center gap-1 font-medium text-stone-800">
-                      <Building2 className="w-3.5 h-3.5 text-stone-400" />
-                      {opp.organization}
+          {featuredOpportunities.map((rawOpp) => {
+            const opp = getLocalizedOpp(rawOpp, language);
+            return (
+              <div
+                key={opp.id}
+                className="bg-white border border-stone-200/90 rounded-2xl p-5 hover:border-stone-400 hover:shadow-xs transition-all flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  {/* Unboxed Metadata Header */}
+                  <div className="flex items-center justify-between text-xs text-stone-500">
+                    <span className="font-semibold text-stone-700 capitalize">
+                      {opp.type.replace('_', ' ')}
                     </span>
                     <span aria-hidden="true">·</span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-stone-400" />
-                      {opp.location}
+                    <span className="capitalize">{opp.workMode}</span>
+                    <span aria-hidden="true">·</span>
+                    <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
+                      {t('common.demoDataShort')}
                     </span>
                   </div>
-                </div>
 
-                {/* Compensation */}
-                <div className="p-2.5 bg-stone-50 rounded-xl text-xs flex items-center justify-between border border-stone-100">
-                  <span className="font-bold text-stone-900">{opp.stipend}</span>
-                  <span className="text-stone-500 text-[11px]">{opp.schedule}</span>
-                </div>
-
-                {/* Required Skills */}
-                <div className="space-y-1">
-                  <span className="text-[11px] font-medium text-stone-500">Required Skills:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {opp.skillsRequired.map((skill) => (
-                      <span
-                        key={skill}
-                        className="text-[11px] px-2 py-0.5 bg-[#FBF9F5] border border-stone-200 text-stone-700 rounded-md"
-                      >
-                        {skill}
+                  {/* Title & Organization */}
+                  <div>
+                    <h3
+                      onClick={() => handleViewDetails(rawOpp)}
+                      className="text-sm sm:text-base font-bold text-stone-900 hover:text-[#134E3F] transition-colors cursor-pointer"
+                    >
+                      {opp.title}
+                    </h3>
+                    <div className="flex items-center gap-2 text-xs text-stone-600 mt-1">
+                      <span className="flex items-center gap-1 font-medium text-stone-800">
+                        <Building2 className="w-3.5 h-3.5 text-stone-400" />
+                        {opp.organization}
                       </span>
-                    ))}
+                      <span aria-hidden="true">·</span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-stone-400" />
+                        {opp.location}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Compensation */}
+                  <div className="p-2.5 bg-stone-50 rounded-xl text-xs flex items-center justify-between border border-stone-100">
+                    <span className="font-bold text-stone-900">{opp.stipend}</span>
+                    <span className="text-stone-500 text-[11px]">{opp.schedule}</span>
+                  </div>
+
+                  {/* Required Skills */}
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-medium text-stone-500">{t('common.requiredSkills')}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {opp.skillsRequired.map((skill) => (
+                        <span
+                          key={skill}
+                          className="text-[11px] px-2 py-0.5 bg-[#FBF9F5] border border-stone-200 text-stone-700 rounded-md"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* View Details Action Button */}
-              <div className="pt-4 mt-4 border-t border-stone-100 flex items-center justify-between">
-                <span className="text-[11px] text-stone-500">
-                  {opp.practicalConstraints?.noDegreeRequired ? 'No degree needed' : 'Training provided'}
-                </span>
+                {/* View Details Action Button */}
+                <div className="pt-4 mt-4 border-t border-stone-100 flex items-center justify-between">
+                  <span className="text-[11px] text-stone-500">
+                    {opp.practicalConstraints?.noDegreeRequired ? t('common.noDegreeNeeded') : t('common.trainingProvided')}
+                  </span>
 
-                <button
-                  onClick={() => handleViewDetails(opp)}
-                  className="px-3.5 py-1.5 text-xs font-semibold text-[#134E3F] hover:bg-[#134E3F]/10 border border-[#134E3F]/30 rounded-lg transition-colors flex items-center gap-1"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>View Details</span>
-                </button>
+                  <button
+                    onClick={() => handleViewDetails(rawOpp)}
+                    className="px-3.5 py-1.5 text-xs font-semibold text-[#134E3F] hover:bg-[#134E3F]/10 border border-[#134E3F]/30 rounded-lg transition-colors flex items-center gap-1"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>{t('common.viewDetails')}</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -459,13 +470,13 @@ export const LandingHero: React.FC = () => {
           <div className="space-y-1 max-w-2xl">
             <div className="flex items-center gap-2 text-xs font-bold text-[#134E3F]">
               <Sparkles className="w-4 h-4 text-amber-600" />
-              <span>Interactive Evaluator Feature</span>
+              <span>{t('demoBanner.kicker')}</span>
             </div>
             <h3 className="text-base sm:text-lg font-bold text-stone-900">
-              Explore Pooja Sharma's Verified Demo Dashboard
+              {t('demoBanner.title')}
             </h3>
             <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
-              Experience the platform as a student aspirant from Indore: view an active application under review, verified SkillBridge challenge milestones, portfolio deliverables, and AI guidance recommendations.
+              {t('demoBanner.desc')}
             </p>
           </div>
 
@@ -474,7 +485,7 @@ export const LandingHero: React.FC = () => {
             className="px-5 py-2.5 text-xs font-bold text-white bg-[#134E3F] hover:bg-[#0E3B30] rounded-xl transition-colors shadow-sm flex items-center gap-2 shrink-0 self-start md:self-auto"
           >
             <LayoutDashboard className="w-4 h-4" />
-            <span>Open Demo Dashboard</span>
+            <span>{t('demoBanner.buttonText')}</span>
           </button>
         </div>
       </section>

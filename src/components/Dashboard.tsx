@@ -7,16 +7,11 @@ import {
   Bookmark,
   Briefcase,
   Store,
-  ArrowRight,
   Plus,
-  CheckCircle2,
-  Clock,
   Sparkles,
-  ExternalLink,
-  MessageSquare,
   X,
 } from 'lucide-react';
-import { Opportunity } from '../types';
+import { getLocalizedOpp, getLocalizedSkill } from '../utils/localization';
 
 export const Dashboard: React.FC = () => {
   const {
@@ -32,6 +27,7 @@ export const Dashboard: React.FC = () => {
     setSelectedOpportunityForSkillBridge,
     addPortfolioProject,
     language,
+    t,
     setShowOnboardingModal,
   } = useApp();
 
@@ -46,34 +42,35 @@ export const Dashboard: React.FC = () => {
   // 1. Recommended Next Action Engine
   const completedSkillsCount = skills.filter((s) => s.completed).length;
   const activeApplicationsCount = applications.length;
-  const savedCount = savedOpportunityIds.length;
+
+  const isHi = language === 'hi';
 
   let recommendedAction = {
-    title: 'Complete your first SkillBridge Challenge',
-    desc: 'Demonstrate a practical skill to earn verifiable portfolio evidence that employers trust.',
-    ctaText: 'Start Practical Challenge',
+    title: isHi ? 'अपना पहला स्किलब्रिज चैलेंज पूरा करें' : 'Complete your first SkillBridge Challenge',
+    desc: isHi ? 'व्यावहारिक हुनर प्रदर्शित कर सत्यापन योग्य प्रोजेक्ट सबूत प्राप्त करें जिसे नियोक्ता महत्व देते हैं।' : 'Demonstrate a practical skill to earn verifiable portfolio evidence that employers trust.',
+    ctaText: isHi ? 'प्रैक्टिकल चैलेंज शुरू करें' : 'Start Practical Challenge',
     actionView: 'skillbridge',
   };
 
   if (completedSkillsCount >= 1 && activeApplicationsCount === 0) {
     recommendedAction = {
-      title: 'Apply to a matching entry role or internship',
-      desc: 'You have verified skill competencies. Review top matching opportunities and submit a demo application.',
-      ctaText: 'Explore Matched Roles',
+      title: isHi ? 'उपयुक्त पद या इंटर्नशिप के लिए आवेदन करें' : 'Apply to a matching entry role or internship',
+      desc: isHi ? 'आपके पास सत्यापित कौशल हैं। शीर्ष उपयुक्त अवसरों की समीक्षा करें और डेमो आवेदन भेजें।' : 'You have verified skill competencies. Review top matching opportunities and submit a demo application.',
+      ctaText: isHi ? 'मिलते-जुलते पद देखें' : 'Explore Matched Roles',
       actionView: 'opportunities',
     };
   } else if (activeApplicationsCount > 0 && !profile.bio) {
     recommendedAction = {
-      title: 'Generate an honest Résumé Summary with AI',
-      desc: 'Create a crisp 3-sentence summary highlighting your practical skills without fabricated credentials.',
-      ctaText: 'Draft Summary',
+      title: isHi ? 'एआई के साथ प्रामाणिक सारांश बनाएं' : 'Generate an honest Résumé Summary with AI',
+      desc: isHi ? 'बिना किसी झूठे दावे के अपने वास्तविक व्यावहारिक हुनर को दर्शाने वाला 3 वाक्यों का सारांश तैयार करें।' : 'Create a crisp 3-sentence summary highlighting your practical skills without fabricated credentials.',
+      ctaText: isHi ? 'सारांश तैयार करें' : 'Draft Summary',
       actionView: 'ai_companion',
     };
   } else if ((profile?.goals || []).includes('grow_business')) {
     recommendedAction = {
-      title: 'Add your services and products to Local Business Hub',
-      desc: 'List your items with clear indicative prices and receive simulated client enquiries.',
-      ctaText: 'Manage Storefront',
+      title: isHi ? 'स्थानीय व्यापार हब में अपनी सेवाएं और उत्पाद जोड़ें' : 'Add your services and products to Local Business Hub',
+      desc: isHi ? 'स्पष्ट कीमतों के साथ अपने उत्पादों की सूची बनाएं और ग्राहक संदेश प्राप्त करें।' : 'List your items with clear indicative prices and receive simulated client enquiries.',
+      ctaText: isHi ? 'स्टोरफ्रंट प्रबंधित करें' : 'Manage Storefront',
       actionView: 'business_hub',
     };
   }
@@ -103,10 +100,10 @@ export const Dashboard: React.FC = () => {
     addPortfolioProject({
       title: projTitle,
       category: projCategory,
-      date: 'Recent',
+      date: isHi ? 'हालिया' : 'Recent',
       description: projDesc,
       skillsUsed: projSkills.split(',').map((s) => s.trim()).filter(Boolean),
-      proofUrlOrText: projLink || 'Self-verified project submission',
+      proofUrlOrText: projLink || (isHi ? 'स्व-सत्यापित प्रोजेक्ट प्रमाण' : 'Self-verified project submission'),
     });
 
     setProjTitle('');
@@ -122,16 +119,15 @@ export const Dashboard: React.FC = () => {
       <div className="bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-8 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs font-semibold text-[#134E3F] tracking-wide uppercase">
-            <span>Personal Pathway Dashboard</span>
+            <span>{t('dashboard.kicker')}</span>
             <span aria-hidden="true">·</span>
             <span>{profile.location}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">
-            Welcome back, {profile.name}
+            {t('dashboard.welcome', { name: profile.name })}
           </h2>
           <p className="text-xs sm:text-sm text-stone-600 max-w-2xl leading-relaxed">
-            {profile.bio ||
-              'Building practical competencies and discovering verified employment pathways across India.'}
+            {profile.bio || t('dashboard.defaultBio')}
           </p>
         </div>
 
@@ -140,7 +136,7 @@ export const Dashboard: React.FC = () => {
             onClick={() => setShowOnboardingModal(true)}
             className="px-4 py-2 text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors"
           >
-            Edit Profile &amp; Goals
+            {t('dashboard.editProfileGoalsBtn')}
           </button>
         </div>
       </div>
@@ -150,7 +146,7 @@ export const Dashboard: React.FC = () => {
         <div className="space-y-1 max-w-2xl">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-300 uppercase tracking-wide">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Recommended Next Action</span>
+            <span>{t('dashboard.recommendedNextActionKicker')}</span>
           </div>
           <h3 className="text-lg font-bold text-white">{recommendedAction.title}</h3>
           <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
@@ -159,7 +155,7 @@ export const Dashboard: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setCurrentView(recommendedAction.actionView)}
+          onClick={() => setCurrentView(recommendedAction.actionView as any)}
           className="px-5 py-2.5 text-xs font-bold text-[#134E3F] bg-white hover:bg-amber-100 rounded-xl transition-colors whitespace-nowrap self-start sm:self-auto shrink-0 shadow-sm"
         >
           {recommendedAction.ctaText} →
@@ -170,49 +166,49 @@ export const Dashboard: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white border border-stone-200 rounded-xl p-4">
           <p className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
-            Verified Skills
+            {t('dashboard.metricVerifiedSkills')}
           </p>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-2xl font-bold text-stone-900 tabular-nums">
               {completedSkillsCount}
             </span>
-            <span className="text-xs text-stone-400">/ {skills.length} available</span>
+            <span className="text-xs text-stone-400">{t('dashboard.metricAvailable', { count: skills.length })}</span>
           </div>
         </div>
 
         <div className="bg-white border border-stone-200 rounded-xl p-4">
           <p className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
-            Demo Applications
+            {t('dashboard.metricDemoApps')}
           </p>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-2xl font-bold text-stone-900 tabular-nums">
               {applications.length}
             </span>
-            <span className="text-xs text-stone-400">active</span>
+            <span className="text-xs text-stone-400">{t('dashboard.metricActive')}</span>
           </div>
         </div>
 
         <div className="bg-white border border-stone-200 rounded-xl p-4">
           <p className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
-            Saved Listings
+            {t('dashboard.metricSavedListings')}
           </p>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-2xl font-bold text-stone-900 tabular-nums">
               {savedOpportunityIds.length}
             </span>
-            <span className="text-xs text-stone-400">shortlisted</span>
+            <span className="text-xs text-stone-400">{t('dashboard.metricShortlisted')}</span>
           </div>
         </div>
 
         <div className="bg-white border border-stone-200 rounded-xl p-4">
           <p className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
-            Storefront Enquiries
+            {t('dashboard.metricStorefrontEnquiries')}
           </p>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-2xl font-bold text-stone-900 tabular-nums">
               {business.enquiries.length}
             </span>
-            <span className="text-xs text-stone-400">messages</span>
+            <span className="text-xs text-stone-400">{t('dashboard.metricMessages')}</span>
           </div>
         </div>
       </div>
@@ -227,20 +223,20 @@ export const Dashboard: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-[#134E3F]" />
                 <h3 className="text-base font-bold text-stone-900">
-                  Demo Applications &amp; Status Tracker ({applications.length})
+                  {t('dashboard.appTrackerTitle', { count: applications.length })}
                 </h3>
               </div>
               <button
                 onClick={() => setCurrentView('opportunities')}
                 className="text-xs text-[#134E3F] hover:underline font-semibold"
               >
-                Apply to more roles
+                {t('dashboard.applyToMoreRoles')}
               </button>
             </div>
 
             {applications.length === 0 ? (
               <div className="p-8 text-center text-xs text-stone-500">
-                You haven't submitted any demo applications yet. Browse the opportunity board to apply!
+                {t('dashboard.noAppsYet')}
               </div>
             ) : (
               <div className="space-y-3">
@@ -257,13 +253,15 @@ export const Dashboard: React.FC = () => {
                         <span className="text-[11px] text-stone-500">· {app.organization}</span>
                       </div>
                       <p className="text-[11px] text-stone-600 line-clamp-1">
-                        Applied: {app.appliedAt} · Note: {app.notes}
+                        {t('dashboard.appliedAtLabel', { date: app.appliedAt, notes: app.notes || '' })}
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md capitalize">
-                        {app.status.replace('_', ' ')}
+                        {isHi
+                          ? (app.status === 'reviewing' ? 'समीक्षाधीन' : app.status === 'shortlisted' ? 'शॉर्टलिस्ट' : app.status === 'accepted' ? 'स्वीकृत' : 'जमा किया गया')
+                          : app.status.replace('_', ' ')}
                       </span>
                     </div>
                   </div>
@@ -278,65 +276,68 @@ export const Dashboard: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Compass className="w-4 h-4 text-[#134E3F]" />
                 <h3 className="text-base font-bold text-stone-900">
-                  Top Recommended Opportunities
+                  {t('dashboard.topRecommendationsTitle')}
                 </h3>
               </div>
               <button
                 onClick={() => setCurrentView('opportunities')}
                 className="text-xs text-[#134E3F] hover:underline font-semibold"
               >
-                View all ({opportunities.length})
+                {t('dashboard.viewAllCount', { count: opportunities.length })}
               </button>
             </div>
 
             <div className="space-y-3">
-              {matchedOpportunities.map((opp) => (
-                <div
-                  key={opp.id}
-                  className="p-4 bg-white border border-stone-200 rounded-xl hover:border-stone-400 transition-colors flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs text-stone-500">
-                      <span className="font-semibold text-stone-700">{opp.organization}</span>
-                      <span aria-hidden="true">·</span>
-                      <span>{opp.location}</span>
-                      <span aria-hidden="true">·</span>
-                      <span className="capitalize">{opp.workMode}</span>
+              {matchedOpportunities.map((opp) => {
+                const locOpp = getLocalizedOpp(opp, language);
+                return (
+                  <div
+                    key={opp.id}
+                    className="p-4 bg-white border border-stone-200 rounded-xl hover:border-stone-400 transition-colors flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-xs text-stone-500">
+                        <span className="font-semibold text-stone-700">{locOpp.organization}</span>
+                        <span aria-hidden="true">·</span>
+                        <span>{locOpp.location}</span>
+                        <span aria-hidden="true">·</span>
+                        <span className="capitalize">{locOpp.workMode}</span>
+                      </div>
+                      <h4
+                        onClick={() => {
+                          setSelectedOpportunityForDetail(opp);
+                          setCurrentView('opportunities');
+                        }}
+                        className="text-sm font-bold text-stone-900 hover:text-[#134E3F] transition-colors cursor-pointer"
+                      >
+                        {locOpp.title}
+                      </h4>
+                      <p className="text-xs font-medium text-[#134E3F]">{locOpp.stipend}</p>
                     </div>
-                    <h4
-                      onClick={() => {
-                        setSelectedOpportunityForDetail(opp);
-                        setCurrentView('opportunities');
-                      }}
-                      className="text-sm font-bold text-stone-900 hover:text-[#134E3F] transition-colors cursor-pointer"
-                    >
-                      {opp.title}
-                    </h4>
-                    <p className="text-xs font-medium text-[#134E3F]">{opp.stipend}</p>
-                  </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => {
-                        setSelectedOpportunityForSkillBridge(opp);
-                        setCurrentView('skillbridge');
-                      }}
-                      className="px-3 py-1.5 text-xs font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
-                    >
-                      Check Gap
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedOpportunityForDetail(opp);
-                        setCurrentView('opportunities');
-                      }}
-                      className="px-3.5 py-1.5 text-xs font-semibold text-white bg-[#134E3F] hover:bg-[#0E3B30] rounded-lg transition-colors"
-                    >
-                      View Role
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => {
+                          setSelectedOpportunityForSkillBridge(opp);
+                          setCurrentView('skillbridge');
+                        }}
+                        className="px-3 py-1.5 text-xs font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+                      >
+                        {isHi ? 'अंतर जांचें' : 'Check Gap'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedOpportunityForDetail(opp);
+                          setCurrentView('opportunities');
+                        }}
+                        className="px-3.5 py-1.5 text-xs font-semibold text-white bg-[#134E3F] hover:bg-[#0E3B30] rounded-lg transition-colors"
+                      >
+                        {t('dashboard.viewRoleBtn')}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -346,7 +347,7 @@ export const Dashboard: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Award className="w-4 h-4 text-[#134E3F]" />
                 <h3 className="text-base font-bold text-stone-900">
-                  Portfolio &amp; Demonstrable Proof ({portfolio.length})
+                  {t('dashboard.portfolioTitle', { count: portfolio.length })}
                 </h3>
               </div>
               <button
@@ -354,7 +355,7 @@ export const Dashboard: React.FC = () => {
                 className="px-3 py-1.5 text-xs font-semibold text-white bg-[#134E3F] rounded-lg hover:bg-[#0E3B30] flex items-center gap-1 shadow-2xs"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Add Project</span>
+                <span>{t('dashboard.addProjectBtn')}</span>
               </button>
             </div>
 
@@ -391,33 +392,36 @@ export const Dashboard: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Bookmark className="w-4 h-4 text-[#134E3F]" />
                 <h3 className="text-sm font-bold text-stone-900">
-                  Saved Opportunities ({savedOpportunities.length})
+                  {t('dashboard.savedOpportunitiesTitle', { count: savedOpportunities.length })}
                 </h3>
               </div>
             </div>
 
             {savedOpportunities.length === 0 ? (
               <p className="text-xs text-stone-400 py-4 text-center">
-                No saved roles. Click the bookmark icon on any opportunity to save it here.
+                {t('dashboard.noSavedYet')}
               </p>
             ) : (
               <div className="space-y-2.5">
-                {savedOpportunities.map((opp) => (
-                  <div
-                    key={opp.id}
-                    onClick={() => {
-                      setSelectedOpportunityForDetail(opp);
-                      setCurrentView('opportunities');
-                    }}
-                    className="p-3 bg-[#FBF9F5] border border-stone-200 rounded-xl hover:border-stone-400 transition-colors cursor-pointer space-y-1"
-                  >
-                    <p className="text-xs font-bold text-stone-900 line-clamp-1">{opp.title}</p>
-                    <div className="flex items-center justify-between text-[11px] text-stone-500">
-                      <span>{opp.organization}</span>
-                      <span className="font-semibold text-[#134E3F]">{opp.stipend}</span>
+                {savedOpportunities.map((opp) => {
+                  const locOpp = getLocalizedOpp(opp, language);
+                  return (
+                    <div
+                      key={opp.id}
+                      onClick={() => {
+                        setSelectedOpportunityForDetail(opp);
+                        setCurrentView('opportunities');
+                      }}
+                      className="p-3 bg-[#FBF9F5] border border-stone-200 rounded-xl hover:border-stone-400 transition-colors cursor-pointer space-y-1"
+                    >
+                      <p className="text-xs font-bold text-stone-900 line-clamp-1">{locOpp.title}</p>
+                      <div className="flex items-center justify-between text-[11px] text-stone-500">
+                        <span>{locOpp.organization}</span>
+                        <span className="font-semibold text-[#134E3F]">{locOpp.stipend}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -428,44 +432,47 @@ export const Dashboard: React.FC = () => {
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-[#134E3F]" />
                 <h3 className="text-sm font-bold text-stone-900">
-                  Skill Milestones
+                  {t('dashboard.skillMilestonesTitle')}
                 </h3>
               </div>
               <button
                 onClick={() => setCurrentView('skillbridge')}
                 className="text-xs text-[#134E3F] hover:underline font-semibold"
               >
-                Go to Hub
+                {t('dashboard.goToHubBtn')}
               </button>
             </div>
 
             <div className="space-y-2.5">
-              {skills.map((sk) => (
-                <div
-                  key={sk.id}
-                  className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex items-center justify-between gap-3 text-xs"
-                >
-                  <div>
-                    <p className="font-semibold text-stone-900">{sk.name}</p>
-                    <span className="text-[11px] text-stone-500 capitalize">{sk.category}</span>
+              {skills.map((sk) => {
+                const locSk = getLocalizedSkill(sk, language);
+                return (
+                  <div
+                    key={sk.id}
+                    className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div>
+                      <p className="font-semibold text-stone-900">{locSk.name}</p>
+                      <span className="text-[11px] text-stone-500 capitalize">{sk.category}</span>
+                    </div>
+                    {sk.completed ? (
+                      <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                        {isHi ? 'सत्यापित ✓' : 'Verified ✓'}
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setSelectedOpportunityForSkillBridge(opportunities[0]);
+                          setCurrentView('skillbridge');
+                        }}
+                        className="text-[11px] text-amber-800 hover:underline font-medium"
+                      >
+                        {isHi ? 'अभ्यास करें →' : 'Practice →'}
+                      </button>
+                    )}
                   </div>
-                  {sk.completed ? (
-                    <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
-                      Verified ✓
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setSelectedOpportunityForSkillBridge(opportunities[0]);
-                        setCurrentView('skillbridge');
-                      }}
-                      className="text-[11px] text-amber-800 hover:underline font-medium"
-                    >
-                      Practice →
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -473,17 +480,17 @@ export const Dashboard: React.FC = () => {
           <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-6 space-y-3">
             <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
               <Store className="w-4 h-4 text-amber-700" />
-              <span>Local Business Snapshot</span>
+              <span>{isHi ? 'स्थानीय व्यापार सारांश' : 'Local Business Snapshot'}</span>
             </div>
             <p className="text-xs text-amber-950 font-semibold">{business.businessName}</p>
             <p className="text-xs text-amber-900/80 line-clamp-2">{business.tagline}</p>
             <div className="pt-2 border-t border-amber-200 text-xs text-amber-950 flex items-center justify-between">
-              <span>{business.services.length} services listed</span>
+              <span>{isHi ? `${business.services.length} सेवाएं सूचीबद्ध` : `${business.services.length} services listed`}</span>
               <button
                 onClick={() => setCurrentView('business_hub')}
                 className="font-bold underline hover:text-amber-800"
               >
-                Open Hub →
+                {isHi ? 'हब खोलें →' : 'Open Hub →'}
               </button>
             </div>
           </div>
@@ -495,7 +502,7 @@ export const Dashboard: React.FC = () => {
         <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-[#FBF9F5] border border-stone-200 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
             <div className="flex items-center justify-between pb-2 border-b border-stone-200">
-              <h4 className="text-sm font-bold text-stone-900">Add Portfolio Project</h4>
+              <h4 className="text-sm font-bold text-stone-900">{t('dashboard.addProjectBtn')}</h4>
               <button
                 onClick={() => setShowAddProjectModal(false)}
                 className="text-stone-400 hover:text-stone-700"
@@ -506,52 +513,52 @@ export const Dashboard: React.FC = () => {
 
             <form onSubmit={handleCreateProject} className="space-y-3 text-xs">
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">Project Title</label>
+                <label className="block font-semibold text-stone-700 mb-1">{isHi ? 'प्रोजेक्ट का शीर्षक' : 'Project Title'}</label>
                 <input
                   type="text"
                   value={projTitle}
                   onChange={(e) => setProjTitle(e.target.value)}
-                  placeholder="e.g. Solar Installation Quotation Calculator"
+                  placeholder={isHi ? 'उदा. सोलर इंस्टॉलेशन कोटेशन कैलकुलेटर' : 'e.g. Solar Installation Quotation Calculator'}
                   className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">Category</label>
+                <label className="block font-semibold text-stone-700 mb-1">{isHi ? 'श्रेणी' : 'Category'}</label>
                 <input
                   type="text"
                   value={projCategory}
                   onChange={(e) => setProjCategory(e.target.value)}
-                  placeholder="e.g. Clean Energy, Web Design, Operations"
+                  placeholder={isHi ? 'उदा. सौर ऊर्जा, वेब डिज़ाइन, संचालन' : 'e.g. Clean Energy, Web Design, Operations'}
                   className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">Skills Used (comma-separated)</label>
+                <label className="block font-semibold text-stone-700 mb-1">{isHi ? 'प्रयुक्त कौशल (कॉमा से अलग करें)' : 'Skills Used (comma-separated)'}</label>
                 <input
                   type="text"
                   value={projSkills}
                   onChange={(e) => setProjSkills(e.target.value)}
-                  placeholder="e.g. Solar Wiring, Google Sheets, Customer Comm"
+                  placeholder={isHi ? 'उदा. सोलर वायरिंग, गूगल शीट्स, ग्राहक संचार' : 'e.g. Solar Wiring, Google Sheets, Customer Comm'}
                   className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">Project Description</label>
+                <label className="block font-semibold text-stone-700 mb-1">{isHi ? 'प्रोजेक्ट विवरण' : 'Project Description'}</label>
                 <textarea
                   rows={3}
                   value={projDesc}
                   onChange={(e) => setProjDesc(e.target.value)}
-                  placeholder="What problem did you solve? How did you build or execute it?"
+                  placeholder={isHi ? 'आपने क्या समस्या हल की? इसे कैसे बनाया?' : 'What problem did you solve? How did you build or execute it?'}
                   className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">Live Proof / Link (Optional)</label>
+                <label className="block font-semibold text-stone-700 mb-1">{isHi ? 'लाइव लिंक या प्रमाण (वैकल्पिक)' : 'Live Proof / Link (Optional)'}</label>
                 <input
                   type="text"
                   value={projLink}
@@ -567,13 +574,13 @@ export const Dashboard: React.FC = () => {
                   onClick={() => setShowAddProjectModal(false)}
                   className="px-3 py-1.5 text-stone-600 hover:text-stone-900"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-1.5 font-semibold text-white bg-[#134E3F] rounded-lg"
                 >
-                  Save Project
+                  {isHi ? 'प्रोजेक्ट सहेजें' : 'Save Project'}
                 </button>
               </div>
             </form>

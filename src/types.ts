@@ -40,15 +40,23 @@ export type WorkMode = 'remote' | 'on_site' | 'hybrid';
 export interface Opportunity {
   id: string;
   title: string;
+  titleHi?: string;
   organization: string;
+  organizationHi?: string;
   type: OpportunityType;
   workMode: WorkMode;
   location: string;
+  locationHi?: string;
   stipend: string;
+  stipendHi?: string;
   schedule: string;
+  scheduleHi?: string;
   skillsRequired: string[];
+  skillsRequiredHi?: string[];
   requirements: string[];
+  requirementsHi?: string[];
   description: string;
+  descriptionHi?: string;
   practicalConstraints: {
     noDegreeRequired?: boolean;
     equipmentProvided?: boolean;
@@ -58,6 +66,7 @@ export interface Opportunity {
     womenInclusive?: boolean;
   };
   postedDate: string;
+  postedDateHi?: string;
   vacancies: number;
 }
 
@@ -75,15 +84,21 @@ export interface Application {
 export interface PracticalChallenge {
   id: string;
   title: string;
+  titleHi?: string;
   scenario: string;
+  scenarioHi?: string;
   task: string;
+  taskHi?: string;
   starterHint: string;
+  starterHintHi?: string;
   rubric: string[];
+  rubricHi?: string[];
 }
 
 export interface SkillItem {
   id: string;
   name: string;
+  nameHi?: string;
   category: 'digital' | 'vocational' | 'business' | 'creative' | 'operations';
   level: 'beginner' | 'intermediate' | 'advanced';
   whyItMatters: {
@@ -93,8 +108,10 @@ export interface SkillItem {
   learningRoadmap: {
     step: number;
     milestone: string;
+    milestoneHi?: string;
     estHours: string;
     resourceTip: string;
+    resourceTipHi?: string;
   }[];
   challenge: PracticalChallenge;
   completed?: boolean;
@@ -160,4 +177,33 @@ export interface ToastMessage {
   type: 'success' | 'info' | 'warning';
   title: string;
   description?: string;
+}
+
+export interface AIRoadmapStep {
+  id: string;
+  stepNumber: number;
+  skill: string;
+  whyItMatters: string;
+  practicalTask: string;
+  estimatedTime: string;
+  demonstrableOutcome: string;
+  completed: boolean;
+}
+
+export interface AIRoadmap {
+  id: string;
+  targetRole: string;
+  targetOpportunityId?: string;
+  generatedAt: string;
+  steps: AIRoadmapStep[];
+}
+
+export interface AIChatMessage {
+  id: string;
+  sender: 'user' | 'assistant';
+  text: string;
+  timestamp: string;
+  capability?: 'guidance' | 'skill_gap' | 'roadmap' | 'opportunity_matching' | 'small_business';
+  structuredData?: any;
+  source?: 'gemini' | 'deterministic_fallback';
 }

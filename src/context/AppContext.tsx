@@ -10,6 +10,9 @@ import {
   BusinessListing,
   ToastMessage,
   Language,
+  AIRoadmap,
+  AIRoadmapStep,
+  AIChatMessage,
 } from '../types';
 import {
   DEFAULT_USER_PROFILE,
@@ -20,6 +23,12 @@ import {
   DEMO_PERSONAS,
   UI_TRANSLATIONS,
 } from '../data/sampleData';
+import { translate } from '../translations';
+
+export type TranslationFunction = {
+  (key: string, params?: Record<string, string | number>): string;
+  [key: string]: any;
+};
 
 interface AppContextType {
   profile: UserProfile;
@@ -27,7 +36,7 @@ interface AppContextType {
   loadPersona: (personaId: string) => void;
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: typeof UI_TRANSLATIONS['en'];
+  t: TranslationFunction;
 
   currentView: string;
   setCurrentView: (view: string) => void;
@@ -73,6 +82,13 @@ interface AppContextType {
   showOnboardingModal: boolean;
   setShowOnboardingModal: (show: boolean) => void;
 
+  aiRoadmap: AIRoadmap | null;
+  setAiRoadmap: (roadmap: AIRoadmap | null) => void;
+  toggleRoadmapStep: (stepId: string) => void;
+  aiChatMessages: AIChatMessage[];
+  addAiChatMessage: (message: Omit<AIChatMessage, 'id' | 'timestamp'>) => void;
+  clearAiChat: () => void;
+
   resetAllDemoData: () => void;
 }
 
@@ -86,10 +102,40 @@ const STORAGE_KEYS = {
   PORTFOLIO: 'kaamsetu_portfolio_v1',
   BUSINESS: 'kaamsetu_business_v1',
   VIEW: 'kaamsetu_view_v1',
+  AI_ROADMAP: 'kaamsetu_ai_roadmap_v1',
+  AI_CHAT: 'kaamsetu_ai_chat_v1',
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // 1. Profile State with deep safe fallback
+  // 1. Language State with dedicated persistence and HTML attribute sync
+  const [language, setLanguageState] = useState<Language>(() => {
+    try {
+      const savedLang = localStorage.getItem('kaamsetu_lang');
+      if (savedLang === 'en' || savedLang === 'hi') return savedLang;
+      const savedProfile = localStorage.getItem(STORAGE_KEYS.PROFILE);
+      if (savedProfile) {
+        const parsed = JSON.parse(savedProfile);
+        if (parsed.language === 'en' || parsed.language === 'hi') return parsed.language;
+      }
+      return 'en';
+    } catch {
+      return 'en';
+    }
+  });
+
+  // Sync HTML lang attribute immediately on render
+  useEffect(() => {
+    try {
+      localStorage.setItem('kaamsetu_lang', language);
+      if (typeof document !== 'undefined') {
+        document.documentElement.lang = language;
+      }
+    } catch (e) {
+      console.warn('Language sync error', e);
+    }
+  }, [language]);
+
+  // 2. Profile State with deep safe fallback
   const [profile, setProfile] = useState<UserProfile>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
@@ -110,7 +156,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  // 2. Navigation View State (default strictly to public landing page)
+  // 3. Navigation View State (default strictly to public landing page)
   const [currentView, setCurrentViewState] = useState<string>('landing');
 
   // Search & Pre-Filter State shared between Homepage & Explorer
@@ -315,11 +361,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const setLanguage = (lang: Language) => {
-    updateProfile({ language: lang });
+    setLanguageState(lang);
+    setProfile((prev) => ({ ...prev, language: lang }));
+    addToast({
+      type: 'info',
+      title: translate(lang, 'common.languageChangedToast'),
+      description: translate(lang, 'common.languageChangedToastDesc'),
+    });
   };
 
-  const language = profile.language || 'en';
-  const t = UI_TRANSLATIONS[language] || UI_TRANSLATIONS.en;
+  // Reusable callable translation helper function
+  const t: TranslationFunction = React.useMemo(() => {
+    const fn = ((key: string, params?: Record<string, string | number>) => {
+      return translate(language, key, params);
+    }) as any;
+
+    // Backward-compatible properties for existing callers
+    fn.brandName = translate(language, 'common.appName');
+    fn.brandTagline = translate(language, 'common.tagline');
+    fn.navOpportunities = translate(language, 'navbar.opportunities');
+    fn.navSkillBridge = translate(language, 'navbar.skillbridge');
+    fn.navAICompanion = translate(language, 'navbar.aiCompanion');
+    fn.navBusinessHub = translate(language, 'navbar.businessHub');
+    fn.navDashboard = translate(language, 'navbar.demoDashboard');
+    fn.ctaFindPathway = translate(language, 'navbar.findPathway');
+    fn.ctaExplore = translate(language, 'navbar.opportunities');
+    fn.heroHeadline = translate(language, 'hero.headline');
+    fn.heroSubtext = translate(language, 'hero.subtext');
+    fn.resetDemo = translate(language, 'footer.resetDemoBtn');
+    fn.demoNotice = translate(language, 'common.demoDataBadge');
+    fn.simplifiedModeActive = translate(language, 'common.simplifiedActive');
+    fn.lowBandwidthActive = translate(language, 'onboarding.lowBandwidthTitle');
+
+    return fn;
+  }, [language]);
 
   const loadPersona = (personaId: string) => {
     const found = DEMO_PERSONAS.find((p) => p.id === personaId);
