@@ -3,6 +3,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
+import { INITIAL_OPPORTUNITIES } from './src/data/sampleData';
+import { promises as fs } from 'node:fs';
+
 
 dotenv.config();
 
@@ -22,6 +25,165 @@ const app = express();
 const PORT = getPort();
 
 app.use(express.json());
+
+
+app.get('/api/opportunities', (req: Request, res: Response) => {
+  const { search, type, location } = req.query;
+
+  let results = INITIAL_OPPORTUNITIES;
+
+  if (typeof search === 'string' && search.trim()) {
+    const query = search.trim().toLowerCase();
+
+    results = results.filter((opp) =>
+      opp.title.toLowerCase().includes(query) ||
+      opp.organization.toLowerCase().includes(query) ||
+      opp.skillsRequired.some((skill) =>
+        skill.toLowerCase().includes(query)
+      )
+    );
+  }
+
+  if (typeof type === 'string' && type !== 'all') {
+    results = results.filter((opp) => opp.type === type);
+  }
+
+  if (typeof location === 'string' && location.trim()) {
+    const query = location.trim().toLowerCase();
+
+    results = results.filter((opp) =>
+      opp.location.toLowerCase().includes(query) ||
+      (query === 'remote' && opp.workMode === 'remote')
+    );
+  }
+
+  res.json({
+    success: true,
+    count: results.length,
+    opportunities: results,
+  });
+});
+
+
+type DemoApplication = {
+  id: string;
+  opportunityId: string;
+  opportunityTitle: string;
+  organization: string;
+  applicantName: string;
+  notes: string;
+  status: 'submitted';
+  appliedAt: string;
+};
+
+// Temporary demo storage — resets when server restarts.
+
+const APPLICATIONS_FILE = path.join(process.cwd(), 'demo-applications.json');
+
+let demoApplications: DemoApplication[] = [];
+
+async function loadApplications() {
+  try {
+    const data = await fs.readFile(APPLICATIONS_FILE, 'utf8');
+    const parsed = JSON.parse(data);
+
+    demoApplications = Array.isArray(parsed) ? parsed : [];
+  } catch (error: any) {
+    if (error.code !== 'ENOENT') {
+      console.error('Failed to load applications:', error);
+    }
+  }
+}
+
+async function saveApplications() {
+  await fs.writeFile(
+    APPLICATIONS_FILE,
+    JSON.stringify(demoApplications, null, 2),
+    'utf8'
+  );
+}
+
+await loadApplications();
+
+
+// Retrieve submitted demo applications
+app.get('/api/applications', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    count: demoApplications.length,
+    applications: demoApplications,
+  });
+});
+
+// Submit a demo application
+app.post('/api/applications', async (req: Request, res: Response) => {
+  const { opportunityId, applicantName, notes } = req.body ?? {};
+
+  if (
+    typeof opportunityId !== 'string' ||
+    typeof applicantName !== 'string' ||
+    !opportunityId.trim() ||
+    !applicantName.trim()
+  ) {
+    return res.status(400).json({
+      success: false,
+      error: 'Opportunity ID and applicant name are required.',
+    });
+  }
+
+  const opportunity = INITIAL_OPPORTUNITIES.find(
+    (opp) => opp.id === opportunityId
+  );
+
+  if (!opportunity) {
+    return res.status(404).json({
+      success: false,
+      error: 'Opportunity not found.',
+    });
+  }
+
+  if (demoApplications.some(
+    (app) =>
+      app.opportunityId === opportunityId &&
+      app.applicantName.toLowerCase() === applicantName.trim().toLowerCase()
+  )) {
+    return res.status(409).json({
+      success: false,
+      error: 'Demo application already submitted for this opportunity.',
+    });
+  }
+
+  const application: DemoApplication = {
+    id: `app-${Date.now()}`,
+    opportunityId,
+    opportunityTitle: opportunity.title,
+    organization: opportunity.organization,
+    applicantName: applicantName.trim(),
+    notes: typeof notes === 'string' ? notes.trim() : '',
+    status: 'submitted',
+    appliedAt: new Date().toISOString(),
+  };
+
+  demoApplications.push(application);
+  
+  try {
+    await saveApplications();
+  } catch (error) {
+    console.error('Failed to save application:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Could not save application.',
+    });
+  }
+
+
+  return res.status(201).json({
+    success: true,
+    message: 'Demo application submitted successfully.',
+    application,
+  });
+});
+
 
 // Initialize Google GenAI client if key is configured
 const apiKey = process.env.GEMINI_API_KEY;
