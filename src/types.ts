@@ -28,6 +28,16 @@ export interface UserProfile {
   portfolioUrl?: string;
 }
 
+export type OpportunityCategory =
+  | 'software_web'
+  | 'data_python'
+  | 'aiml_emerging'
+  | 'electronics_robotics'
+  | 'design_creative'
+  | 'marketing_content'
+  | 'business_operations'
+  | 'local_trades';
+
 export type OpportunityType =
   | 'internship'
   | 'entry_level'
@@ -43,6 +53,8 @@ export interface Opportunity {
   titleHi?: string;
   organization: string;
   organizationHi?: string;
+  category: OpportunityCategory;
+  categoryHi?: string;
   type: OpportunityType;
   workMode: WorkMode;
   location: string;
@@ -68,6 +80,7 @@ export interface Opportunity {
   postedDate: string;
   postedDateHi?: string;
   vacancies: number;
+  isDemo?: boolean;
 }
 
 export interface Application {

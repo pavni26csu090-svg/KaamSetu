@@ -294,6 +294,70 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
+  // 10. AI Roadmap and Chat State
+  const [aiRoadmap, setAiRoadmap] = useState<AIRoadmap | null>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.AI_ROADMAP);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [aiChatMessages, setAiChatMessages] = useState<AIChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.AI_CHAT);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const toggleRoadmapStep = (stepId: string) => {
+    setAiRoadmap((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        steps: prev.steps.map((st) =>
+          st.id === stepId ? { ...st, completed: !st.completed } : st
+        ),
+      };
+    });
+  };
+
+  const addAiChatMessage = (message: Omit<AIChatMessage, 'id' | 'timestamp'>) => {
+    const newMessage: AIChatMessage = {
+      ...message,
+      id: 'msg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    setAiChatMessages((prev) => [...prev, newMessage]);
+  };
+
+  const clearAiChat = () => {
+    setAiChatMessages([]);
+  };
+
+  useEffect(() => {
+    try {
+      if (aiRoadmap) {
+        localStorage.setItem(STORAGE_KEYS.AI_ROADMAP, JSON.stringify(aiRoadmap));
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.AI_ROADMAP);
+      }
+    } catch (e) {
+      console.warn('Storage sync error', e);
+    }
+  }, [aiRoadmap]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.AI_CHAT, JSON.stringify(aiChatMessages));
+    } catch (e) {
+      console.warn('Storage sync error', e);
+    }
+  }, [aiChatMessages]);
+
   // Sync to LocalStorage
   useEffect(() => {
     try {
@@ -641,6 +705,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.removeItem(STORAGE_KEYS.PORTFOLIO);
       localStorage.removeItem(STORAGE_KEYS.BUSINESS);
       localStorage.removeItem(STORAGE_KEYS.VIEW);
+      localStorage.removeItem(STORAGE_KEYS.AI_ROADMAP);
+      localStorage.removeItem(STORAGE_KEYS.AI_CHAT);
     } catch (e) {
       console.warn('Storage clear error', e);
     }
@@ -662,6 +728,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSkills(INITIAL_SKILLS);
     setPortfolio(INITIAL_PORTFOLIO);
     setBusiness(INITIAL_BUSINESS_PROFILE);
+    setAiRoadmap(null);
+    setAiChatMessages([]);
     setCurrentViewState('landing');
 
     addToast({
@@ -724,6 +792,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         showOnboardingModal,
         setShowOnboardingModal,
+
+        aiRoadmap,
+        setAiRoadmap,
+        toggleRoadmapStep,
+        aiChatMessages,
+        addAiChatMessage,
+        clearAiChat,
 
         resetAllDemoData,
       }}

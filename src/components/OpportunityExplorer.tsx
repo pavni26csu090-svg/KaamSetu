@@ -15,9 +15,14 @@ import {
   Info,
   ShieldAlert,
 } from 'lucide-react';
-import { Opportunity, OpportunityType, WorkMode } from '../types';
+import { Opportunity, OpportunityCategory, OpportunityType, WorkMode } from '../types';
 import { VoiceInputButton } from './VoiceInputButton';
 import { getLocalizedOpp } from '../utils/localization';
+import {
+  OPPORTUNITY_CATEGORIES,
+  getCategoryShortLabel,
+  calculateOpportunityRelevance,
+} from '../utils/opportunityRelevance';
 
 export const OpportunityExplorer: React.FC = () => {
   const {
@@ -44,10 +49,21 @@ export const OpportunityExplorer: React.FC = () => {
   } = useApp();
 
   // Local filter states with context synchronization
+  const [selectedCategory, setSelectedCategory] = useState<OpportunityCategory | 'all'>('all');
+  const [onlyHighFit, setOnlyHighFit] = useState<boolean>(false);
   const [selectedMode, setSelectedMode] = useState<string>('all');
   const [onlyNoDegree, setOnlyNoDegree] = useState<boolean>(Boolean(preselectedConstraint.noDegreeOnly));
   const [onlyFlexible, setOnlyFlexible] = useState<boolean>(Boolean(preselectedConstraint.flexibleOnly));
   const [onlyEquipmentProvided, setOnlyEquipmentProvided] = useState<boolean>(false);
+
+  // Category counts
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: opportunities.length };
+    for (const opp of opportunities) {
+      counts[opp.category] = (counts[opp.category] || 0) + 1;
+    }
+    return counts;
+  }, [opportunities]);
 
   // Sync when preselectedConstraint changes
   React.useEffect(() => {
@@ -71,41 +87,71 @@ export const OpportunityExplorer: React.FC = () => {
   const [applyCoverNote, setApplyCoverNote] = useState('');
   const [applyPortfolioUrl, setApplyPortfolioUrl] = useState(profile.portfolioUrl || '');
 
-  // Filtered List with safe null checks
+  // Filtered List with safe null checks and relevance calculation
   const filteredOpportunities = useMemo(() => {
-    return opportunities.filter((opp) => {
-      // Keyword search (title, org, skills, location)
-      const q = (searchQuery || '').toLowerCase().trim();
-      const matchesQuery =
-        !q ||
-        opp.title.toLowerCase().includes(q) ||
-        opp.organization.toLowerCase().includes(q) ||
-        opp.location.toLowerCase().includes(q) ||
-        (opp.skillsRequired || []).some((s) => s.toLowerCase().includes(q));
+    const q = (searchQuery || '').toLowerCase().trim();
 
-      // Type filter (supports 'all', exact type, or 'students' which matches internships + entry_level)
-      let matchesType = true;
-      if (selectedTypeFilter !== 'all') {
-        if (selectedTypeFilter === 'students') {
-          matchesType = opp.type === 'internship' || opp.type === 'entry_level';
-        } else {
-          matchesType = opp.type === selectedTypeFilter;
+    return opportunities
+      .map((opp) => ({
+        rawOpp: opp,
+        relevance: calculateOpportunityRelevance(opp, profile),
+      }))
+      .filter(({ rawOpp: opp, relevance }) => {
+        // Keyword search (title, org, skills, location)
+        if (q) {
+          const title = opp.title.toLowerCase();
+          const titleHi = (opp.titleHi || '').toLowerCase();
+          const org = opp.organization.toLowerCase();
+          const orgHi = (opp.organizationHi || '').toLowerCase();
+          const loc = opp.location.toLowerCase();
+          const skills = (opp.skillsRequired || []).map((s) => s.toLowerCase());
+
+          const matchesTitle = title.includes(q) || titleHi.includes(q);
+          const matchesOrg = org.includes(q) || orgHi.includes(q);
+          const matchesLoc = loc.includes(q);
+          const matchesSkill = skills.some((s) => s.includes(q));
+
+          if (!matchesTitle && !matchesOrg && !matchesLoc && !matchesSkill) {
+            return false;
+          }
         }
-      }
 
-      // Mode filter
-      const matchesMode = selectedMode === 'all' || opp.workMode === selectedMode;
+        // Category filter
+        if (selectedCategory !== 'all' && opp.category !== selectedCategory) {
+          return false;
+        }
 
-      // Practical constraints with safe chaining
-      if (onlyNoDegree && !opp.practicalConstraints?.noDegreeRequired) return false;
-      if (onlyFlexible && !opp.practicalConstraints?.flexibleHours) return false;
-      if (onlyEquipmentProvided && !opp.practicalConstraints?.equipmentProvided) return false;
+        // Recommended / High Fit toggle
+        if (onlyHighFit && !relevance.isHighFit) {
+          return false;
+        }
 
-      return matchesQuery && matchesType && matchesMode;
-    });
+        // Type filter (supports 'all', exact type, or 'students' which matches internships + entry_level)
+        if (selectedTypeFilter !== 'all') {
+          if (selectedTypeFilter === 'students') {
+            if (opp.type !== 'internship' && opp.type !== 'entry_level') return false;
+          } else if (opp.type !== selectedTypeFilter) {
+            return false;
+          }
+        }
+
+        // Mode filter
+        if (selectedMode !== 'all' && opp.workMode !== selectedMode) return false;
+
+        // Practical constraints with safe chaining
+        if (onlyNoDegree && !opp.practicalConstraints?.noDegreeRequired) return false;
+        if (onlyFlexible && !opp.practicalConstraints?.flexibleHours) return false;
+        if (onlyEquipmentProvided && !opp.practicalConstraints?.equipmentProvided) return false;
+
+        return true;
+      })
+      .sort((a, b) => b.relevance.score - a.relevance.score);
   }, [
     opportunities,
+    profile,
     searchQuery,
+    selectedCategory,
+    onlyHighFit,
     selectedTypeFilter,
     selectedMode,
     onlyNoDegree,
@@ -171,6 +217,68 @@ export const OpportunityExplorer: React.FC = () => {
               {t('common.clear')}
             </button>
           )}
+        </div>
+
+        {/* Category Filter Pills Bar */}
+        <div className="space-y-1.5 pt-1 border-t border-stone-100">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-stone-500 font-semibold uppercase tracking-wider text-[11px]">
+              {language === 'hi' ? 'करियर श्रेणियां' : 'Career Categories'}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setOnlyHighFit(!onlyHighFit)}
+                className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors ${
+                  onlyHighFit
+                    ? 'bg-amber-500 text-white shadow-2xs'
+                    : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100'
+                }`}
+              >
+                <Sparkles className="w-3 h-3 text-amber-700" />
+                <span>{language === 'hi' ? 'केवल उपयुक्त' : 'High Fit Only'}</span>
+              </button>
+              {(selectedCategory !== 'all' || searchQuery || onlyHighFit) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory('all');
+                    setOnlyHighFit(false);
+                    setSearchQuery('');
+                  }}
+                  className="text-rose-700 hover:underline text-[11px] font-semibold"
+                >
+                  {language === 'hi' ? 'रीसेट' : 'Reset'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-thin">
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={`px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap shrink-0 ${
+                selectedCategory === 'all'
+                  ? 'bg-stone-900 text-white shadow-2xs'
+                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900'
+              }`}
+            >
+              {language === 'hi' ? 'सभी श्रेणियां' : 'All Categories'} ({categoryCounts.all || 0})
+            </button>
+            {OPPORTUNITY_CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap shrink-0 ${
+                  selectedCategory === cat.id
+                    ? 'bg-[#134E3F] text-white shadow-2xs font-semibold'
+                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900'
+                }`}
+              >
+                {language === 'hi' ? cat.shortLabelHi : cat.shortLabelEn} ({categoryCounts[cat.id] || 0})
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Opportunity Type Tabs */}
@@ -258,6 +366,8 @@ export const OpportunityExplorer: React.FC = () => {
         <button
           onClick={() => {
             setSearchQuery('');
+            setSelectedCategory('all');
+            setOnlyHighFit(false);
             setSelectedTypeFilter('all');
             setSelectedMode('all');
             setOnlyNoDegree(false);
@@ -281,6 +391,8 @@ export const OpportunityExplorer: React.FC = () => {
           <button
             onClick={() => {
               setSearchQuery('');
+              setSelectedCategory('all');
+              setOnlyHighFit(false);
               setSelectedTypeFilter('all');
               setSelectedMode('all');
               setOnlyNoDegree(false);
@@ -295,16 +407,14 @@ export const OpportunityExplorer: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {filteredOpportunities.map((rawOpp) => {
+          {filteredOpportunities.map(({ rawOpp, relevance }) => {
             const opp = getLocalizedOpp(rawOpp, language);
             const isSaved = isOpportunitySaved(rawOpp.id);
             const applied = hasApplied(rawOpp.id);
 
             // Compute skill overlap with user profile safely
             const userSkills = profile.skills || [];
-            const matchingSkills = (rawOpp.skillsRequired || []).filter((sk) =>
-              userSkills.includes(sk)
-            );
+            const matchingSkills = relevance.matchingSkills;
 
             return (
               <div
@@ -314,14 +424,21 @@ export const OpportunityExplorer: React.FC = () => {
                 <div>
                   {/* Card Header: Unboxed metadata */}
                   <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2 text-xs text-stone-500">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-stone-500">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-[#134E3F] border border-emerald-200">
+                        {getCategoryShortLabel(rawOpp.category, language)}
+                      </span>
                       <span className="font-medium text-stone-700 capitalize">
                         {opp.type.replace('_', ' ')}
                       </span>
                       <span aria-hidden="true">·</span>
                       <span className="capitalize">{opp.workMode}</span>
-                      <span aria-hidden="true">·</span>
-                      <span>{opp.postedDate}</span>
+                      {relevance.isHighFit && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-amber-700" />
+                          <span>{language === 'hi' ? `${relevance.score}% उपयुक्त` : `${relevance.score}% High Fit`}</span>
+                        </span>
+                      )}
                     </div>
 
                     {/* Bookmark Save Button */}
@@ -405,6 +522,21 @@ export const OpportunityExplorer: React.FC = () => {
                       })}
                     </div>
                   </div>
+
+                  {/* Skill Gap Explanation Banner */}
+                  <div className="mb-3">
+                    {relevance.missingSkills.length > 0 ? (
+                      <p className="text-[11px] text-amber-900 bg-amber-50/70 border border-amber-200/60 px-2.5 py-1 rounded-md">
+                        {language === 'hi' ? relevance.skillGapSummaryHi : relevance.skillGapSummaryEn}
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-emerald-900 bg-emerald-50/70 border border-emerald-200/60 px-2.5 py-1 rounded-md">
+                        {language === 'hi'
+                          ? 'सभी मुख्य आवश्यक कौशल आपकी प्रोफ़ाइल में मौजूद हैं!'
+                          : 'All core required skills match your profile!'}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Card Actions */}
@@ -460,7 +592,14 @@ export const OpportunityExplorer: React.FC = () => {
             <div className="bg-[#FBF9F5] border border-stone-200 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-5">
               <div className="flex items-start justify-between gap-4 border-b border-stone-200 pb-4">
                 <div>
-                  <div className="flex items-center gap-2 text-xs text-stone-500 mb-1">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-stone-500 mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-[#134E3F] border border-emerald-200">
+                      {getCategoryShortLabel(selectedOppForDetail.category, language)}
+                    </span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200">
+                      {language === 'hi' ? 'सैंपल डेमो रिक्ति' : 'Sample Demo Listing'}
+                    </span>
+                    <span aria-hidden="true">·</span>
                     <span className="capitalize">{locDetail.type.replace('_', ' ')}</span>
                     <span aria-hidden="true">·</span>
                     <span className="capitalize">{locDetail.workMode}</span>

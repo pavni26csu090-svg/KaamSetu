@@ -13,6 +13,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { VoiceInputButton } from './VoiceInputButton';
+import { OpportunitySelector } from './OpportunitySelector';
 import { getLocalizedOpp } from '../utils/localization';
 
 type GuidanceMode =
@@ -236,35 +237,14 @@ export const AICareerCompanion: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Context Input & Trigger */}
         <div className="lg:col-span-5 bg-white border border-stone-200/90 rounded-2xl p-6 shadow-xs space-y-5">
-          {/* Mode 1 & 2: Job Selector */}
+          {/* Mode 1 & 2: Searchable Categorized Opportunity Selector */}
           {(activeMode === 'simplify_job' || activeMode === 'skill_gap') && (
-            <div className="space-y-3">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700">
-                {t('aiCompanion.selectOppToAnalyze')}
-              </label>
-              <select
-                value={selectedOppId}
-                onChange={(e) => setSelectedOppId(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-stone-50 border border-stone-300 rounded-lg text-stone-900 focus:outline-none focus:border-[#134E3F]"
-              >
-                {opportunities.map((opp) => {
-                  const locOpp = getLocalizedOpp(opp, language);
-                  return (
-                    <option key={opp.id} value={opp.id}>
-                      {locOpp.title} ({locOpp.organization})
-                    </option>
-                  );
-                })}
-              </select>
-
-              {selectedOpp && (
-                <div className="p-3 bg-stone-50 rounded-xl text-xs space-y-1 text-stone-600 border border-stone-100">
-                  <p><strong className="text-stone-800">{t('aiCompanion.roleLabel')}</strong> {selectedOpp.title}</p>
-                  <p><strong className="text-stone-800">{t('aiCompanion.modeLabel')}</strong> {selectedOpp.workMode} · {selectedOpp.location}</p>
-                  <p><strong className="text-stone-800">{t('opportunities.skillsRequired')}:</strong> {selectedOpp.skillsRequired.join(', ')}</p>
-                </div>
-              )}
-            </div>
+            <OpportunitySelector
+              label={t('aiCompanion.selectOppToAnalyze')}
+              selectedId={selectedOppId}
+              onSelect={(opp) => setSelectedOppId(opp.id)}
+              showDetailsSummary={true}
+            />
           )}
 
           {/* Mode 3: Résumé Context */}

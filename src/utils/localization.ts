@@ -9,6 +9,7 @@ export function getLocalizedOpp(opp: Opportunity, lang: Language) {
     ...opp,
     title: (isHi && opp.titleHi) ? opp.titleHi : opp.title,
     organization: (isHi && opp.organizationHi) ? opp.organizationHi : opp.organization,
+    categoryName: (isHi && opp.categoryHi) ? opp.categoryHi : opp.category,
     location: (isHi && opp.locationHi) ? opp.locationHi : opp.location,
     stipend: (isHi && opp.stipendHi) ? opp.stipendHi : opp.stipend,
     schedule: (isHi && opp.scheduleHi) ? opp.scheduleHi : opp.schedule,

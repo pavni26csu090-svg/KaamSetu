@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { SkillItem, Opportunity } from '../types';
 import { VoiceInputButton } from './VoiceInputButton';
+import { OpportunitySelector } from './OpportunitySelector';
 import { getLocalizedSkill, getLocalizedOpp } from '../utils/localization';
 
 export const SkillBridge: React.FC = () => {
@@ -77,7 +78,7 @@ export const SkillBridge: React.FC = () => {
 
       {/* 1. Skill Gap Analysis Box */}
       <div className="bg-white border border-stone-200/90 rounded-2xl p-6 shadow-xs space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-stone-100">
+        <div className="space-y-4 pb-4 border-b border-stone-100">
           <div>
             <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">
               {t('skillbridge.targetOppAnalysis')}
@@ -87,27 +88,14 @@ export const SkillBridge: React.FC = () => {
             </h3>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-stone-500 font-medium">{t('skillbridge.selectRoleLabel')}</label>
-            <select
-              value={targetOppId}
-              onChange={(e) => {
-                setTargetOppId(e.target.value);
-                const opp = opportunities.find((o) => o.id === e.target.value);
-                if (opp) setSelectedOpportunityForSkillBridge(opp);
-              }}
-              className="px-3 py-1.5 text-xs bg-stone-50 border border-stone-300 rounded-lg text-stone-900 focus:outline-none focus:border-[#134E3F]"
-            >
-              {opportunities.map((opp) => {
-                const loc = getLocalizedOpp(opp, language);
-                return (
-                  <option key={opp.id} value={opp.id}>
-                    {loc.title} ({loc.organization})
-                  </option>
-                );
-              })}
-            </select>
-          </div>
+          <OpportunitySelector
+            selectedId={targetOppId}
+            onSelect={(opp) => {
+              setTargetOppId(opp.id);
+              setSelectedOpportunityForSkillBridge(opp);
+            }}
+            showDetailsSummary={false}
+          />
         </div>
 
         {selectedOpp && (

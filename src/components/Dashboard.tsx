@@ -12,6 +12,10 @@ import {
   X,
 } from 'lucide-react';
 import { getLocalizedOpp, getLocalizedSkill } from '../utils/localization';
+import {
+  rankOpportunitiesForUser,
+  getCategoryShortLabel,
+} from '../utils/opportunityRelevance';
 
 export const Dashboard: React.FC = () => {
   const {
@@ -75,18 +79,10 @@ export const Dashboard: React.FC = () => {
     };
   }
 
-  // 2. Matched Opportunities (matched with user skills)
-  const userSkills = profile?.skills || [];
-  const matchedOpportunities = opportunities
-    .map((opp) => {
-      const matchCount = (opp.skillsRequired || []).filter((sk) =>
-        userSkills.includes(sk)
-      ).length;
-      return { opp, matchCount };
-    })
-    .sort((a, b) => b.matchCount - a.matchCount)
-    .slice(0, 3)
-    .map((item) => item.opp);
+  // 2. Multidimensional Matched Opportunities based on profile interests, goals & skills
+  const rankedOpportunities = React.useMemo(() => {
+    return rankOpportunitiesForUser(opportunities, profile).slice(0, 4);
+  }, [opportunities, profile]);
 
   // 3. Saved Opportunities list
   const savedOpportunities = opportunities.filter((o) =>
@@ -260,7 +256,7 @@ export const Dashboard: React.FC = () => {
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md capitalize">
                         {isHi
-                          ? (app.status === 'reviewing' ? 'समीक्षाधीन' : app.status === 'shortlisted' ? 'शॉर्टलिस्ट' : app.status === 'accepted' ? 'स्वीकृत' : 'जमा किया गया')
+                          ? (app.status === 'under_review' ? 'समीक्षाधीन' : app.status === 'interview_practice' ? 'साक्षात्कार अभ्यास' : app.status === 'offer_received' ? 'ऑफर प्राप्त' : 'जमा किया गया')
                           : app.status.replace('_', ' ')}
                       </span>
                     </div>
@@ -288,21 +284,27 @@ export const Dashboard: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              {matchedOpportunities.map((opp) => {
+              {rankedOpportunities.map(({ opp, relevance }) => {
                 const locOpp = getLocalizedOpp(opp, language);
                 return (
                   <div
                     key={opp.id}
-                    className="p-4 bg-white border border-stone-200 rounded-xl hover:border-stone-400 transition-colors flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                    className="p-4 bg-white border border-stone-200 rounded-xl hover:border-[#134E3F] hover:shadow-sm transition-all flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
                   >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-xs text-stone-500">
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-stone-100 text-stone-700">
+                          {getCategoryShortLabel(opp.category, language)}
+                        </span>
+                        <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                          {relevance.score}% {isHi ? 'मिलान' : 'Match'}
+                        </span>
+                        <span className="text-[10px] text-stone-400">·</span>
                         <span className="font-semibold text-stone-700">{locOpp.organization}</span>
-                        <span aria-hidden="true">·</span>
-                        <span>{locOpp.location}</span>
-                        <span aria-hidden="true">·</span>
-                        <span className="capitalize">{locOpp.workMode}</span>
+                        <span className="text-stone-400">·</span>
+                        <span className="text-stone-500">{locOpp.location}</span>
                       </div>
+
                       <h4
                         onClick={() => {
                           setSelectedOpportunityForDetail(opp);
@@ -312,25 +314,37 @@ export const Dashboard: React.FC = () => {
                       >
                         {locOpp.title}
                       </h4>
-                      <p className="text-xs font-medium text-[#134E3F]">{locOpp.stipend}</p>
+
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-stone-600">
+                        <span className="font-semibold text-emerald-800">{locOpp.stipend}</span>
+                        <span className="text-stone-400">·</span>
+                        <span className="text-[11px] text-stone-500">
+                          {isHi ? relevance.whyMatchedHi : relevance.whyMatchedEn}
+                        </span>
+                      </div>
+
+                      {/* Skill Gap note */}
+                      <p className="text-[11px] text-amber-900 bg-amber-50/70 border border-amber-200/60 px-2.5 py-1 rounded-md inline-block">
+                        {isHi ? relevance.skillGapSummaryHi : relevance.skillGapSummaryEn}
+                      </p>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
                       <button
                         onClick={() => {
                           setSelectedOpportunityForSkillBridge(opp);
                           setCurrentView('skillbridge');
                         }}
-                        className="px-3 py-1.5 text-xs font-medium text-amber-900 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+                        className="px-3 py-1.5 text-xs font-semibold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors"
                       >
-                        {isHi ? 'अंतर जांचें' : 'Check Gap'}
+                        {isHi ? 'कौशल अंतर देखें' : 'Bridge Skill Gap'}
                       </button>
                       <button
                         onClick={() => {
                           setSelectedOpportunityForDetail(opp);
                           setCurrentView('opportunities');
                         }}
-                        className="px-3.5 py-1.5 text-xs font-semibold text-white bg-[#134E3F] hover:bg-[#0E3B30] rounded-lg transition-colors"
+                        className="px-3.5 py-1.5 text-xs font-semibold text-white bg-[#134E3F] hover:bg-[#0E3B30] rounded-lg transition-colors shadow-2xs"
                       >
                         {t('dashboard.viewRoleBtn')}
                       </button>
