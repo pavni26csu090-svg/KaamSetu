@@ -208,6 +208,20 @@ export const AICareerCompanion: React.FC = () => {
         </p>
       </div>
 
+      {/* Simple Mode Active Guide */}
+      {Boolean(profile.accessibility?.simplifiedLanguage) && (
+        <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-3.5 flex items-center gap-2.5 text-xs text-amber-950">
+          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 uppercase">
+            {t('common.simpleModeBadge')}
+          </span>
+          <p>
+            {language === 'hi'
+              ? 'सरल भाषा मोड: कोई भी पद चुनें और "नौकरी का सरल विवरण" पर क्लिक करके आसान भाषा में समझें।'
+              : 'Simple Mode: Select any role and click "Explain in Plain Terms" to get clear, jargon-free explanations.'}
+          </p>
+        </div>
+      )}
+
       {/* Mode Selector Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
         {modeTabs.map((tab) => {

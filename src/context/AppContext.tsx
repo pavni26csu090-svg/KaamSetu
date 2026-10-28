@@ -55,7 +55,12 @@ interface AppContextType {
   isOpportunitySaved: (id: string) => boolean;
 
   applications: Application[];
-  submitApplication: (opportunityId: string, notes: string, portfolioLink?: string) => boolean;
+  submitApplication: (
+    opportunityId: string,
+    notes: string,
+    portfolioLink?: string,
+    resumeFile?: { name: string; size: number; type: string }
+  ) => boolean;
 
   skills: SkillItem[];
   completeSkillChallenge: (skillId: string, evidenceNotes: string, addPortfolio?: boolean) => void;
@@ -507,7 +512,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const isOpportunitySaved = (id: string) => savedOpportunityIds.includes(id);
 
-  const submitApplication = (opportunityId: string, notes: string, portfolioLink?: string) => {
+  const submitApplication = (
+    opportunityId: string,
+    notes: string,
+    portfolioLink?: string,
+    resumeFile?: { name: string; size: number; type: string }
+  ) => {
     const opp = opportunities.find((o) => o.id === opportunityId);
     if (!opp) return false;
 
@@ -515,8 +525,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (alreadyApplied) {
       addToast({
         type: 'warning',
-        title: 'Already Applied',
-        description: 'You have already submitted a demo application for this role.',
+        title: language === 'hi' ? 'पहले ही आवेदन किया गया है' : 'Already Applied',
+        description: language === 'hi'
+          ? 'आप इस पद के लिए पहले ही डेमो आवेदन जमा कर चुके हैं।'
+          : 'You have already submitted a demo application for this role.',
       });
       return false;
     }
@@ -526,17 +538,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       opportunityId,
       opportunityTitle: opp.title,
       organization: opp.organization,
-      appliedAt: 'Just now',
+      appliedAt: language === 'hi' ? 'अभी-अभी' : 'Just now',
       status: 'submitted',
-      notes: notes || 'Applied via KaamSetu verified pathway.',
+      notes: notes || (language === 'hi' ? 'कामसेतु सत्यापित मार्ग के माध्यम से आवेदन किया गया।' : 'Applied via KaamSetu verified pathway.'),
       portfolioLink: portfolioLink || profile.portfolioUrl,
+      resumeFileName: resumeFile?.name,
+      resumeFileSize: resumeFile?.size,
+      resumeFileType: resumeFile?.type,
+      resumeDemoStorage: resumeFile ? true : undefined,
     };
 
     setApplications((prev) => [newApp, ...prev]);
     addToast({
       type: 'success',
-      title: 'Demo Application Submitted!',
-      description: `Application for "${opp.title}" is now recorded in your Dashboard.`,
+      title: language === 'hi' ? 'आवेदन सफलतापूर्वक जमा हुआ!' : 'Demo Application Submitted!',
+      description: language === 'hi'
+        ? `"${opp.title}" के लिए आवेदन आपके डैशबोर्ड में सहेज दिया गया है।`
+        : `Application for "${opp.title}" is now recorded in your Dashboard.`,
     });
     return true;
   };

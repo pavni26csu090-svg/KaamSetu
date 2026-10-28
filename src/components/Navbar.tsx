@@ -150,13 +150,20 @@ export const Navbar: React.FC = () => {
                 updateProfile({
                   accessibility: {
                     ...profile.accessibility,
-                    simplifiedLanguage: !profile.accessibility.simplifiedLanguage,
+                    simplifiedLanguage: !profile.accessibility?.simplifiedLanguage,
                   },
                 })
               }
-              className="text-xs text-stone-600 py-1.5 px-2 hover:bg-stone-100 rounded"
+              className={`text-xs font-semibold py-1.5 px-3 rounded-md border transition-colors flex items-center gap-1.5 ${
+                profile.accessibility?.simplifiedLanguage
+                  ? 'bg-amber-100 text-amber-900 border-amber-300'
+                  : 'text-stone-700 bg-stone-100 border-stone-200 hover:bg-stone-200'
+              }`}
             >
-              {t('navbar.simpleTextMode')}: {profile.accessibility.simplifiedLanguage ? t('common.active') : t('common.no')}
+              <span>{t('common.simpleMode')}:</span>
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${profile.accessibility?.simplifiedLanguage ? 'bg-amber-200 text-amber-950' : 'bg-stone-200 text-stone-600'}`}>
+                {profile.accessibility?.simplifiedLanguage ? t('common.active') : t('common.no')}
+              </span>
             </button>
             <button
               onClick={() => {

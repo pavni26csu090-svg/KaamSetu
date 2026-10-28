@@ -61,6 +61,8 @@ export const LandingHero: React.FC = () => {
   // Top 3 Featured Opportunities
   const featuredOpportunities = opportunities.slice(0, 3);
 
+  const isSimpleMode = Boolean(profile.accessibility?.simplifiedLanguage);
+
   return (
     <div className="space-y-12 sm:space-y-16 pb-16">
       {/* 1. Strong Hero Section */}
@@ -85,6 +87,20 @@ export const LandingHero: React.FC = () => {
               <p className="text-base sm:text-lg text-stone-600 leading-relaxed max-w-2xl">
                 {t('hero.subtext')}
               </p>
+
+              {/* Simple Mode Plain Helper */}
+              {isSimpleMode && (
+                <div className="p-3 bg-amber-50/90 border border-amber-200 rounded-xl text-xs text-amber-950 flex items-center gap-2">
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 uppercase">
+                    {t('common.simpleModeBadge')}
+                  </span>
+                  <span>
+                    {language === 'hi'
+                      ? 'सीधे शब्दों में खोजें: नीचे वह काम लिखें जो आप जानते हैं या सीखना चाहते हैं।'
+                      : 'Plain Search: Type what work you want to do or learn, then pick a location.'}
+                  </span>
+                </div>
+              )}
 
               {/* Prominent Search Bar with Role & Location fields */}
               <div className="bg-white border border-stone-200/90 rounded-2xl p-2.5 sm:p-3.5 shadow-md space-y-2.5">
@@ -249,11 +265,17 @@ export const LandingHero: React.FC = () => {
               <h3 className="text-base font-bold text-stone-900 mb-1 group-hover:text-[#134E3F] transition-colors">
                 {t('audience.studentsTitle')}
               </h3>
-              <p className="text-xs font-medium text-blue-900 mb-2">
-                {t('audience.studentsTag')}
+              <p className="text-xs font-semibold text-blue-900 mb-2">
+                {isSimpleMode
+                  ? (language === 'hi' ? 'सीखने का काम व इंटर्नशिप' : 'Internships & Learning')
+                  : t('audience.studentsTag')}
               </p>
               <p className="text-xs text-stone-600 leading-relaxed">
-                {t('audience.studentsDesc')}
+                {isSimpleMode
+                  ? (language === 'hi'
+                      ? 'छात्रों और शुरुआती उम्मीदवारों के लिए इंटर्नशिप और सीखने वाली नौकरियां।'
+                      : 'Internships and entry-level jobs where you learn on the job.')
+                  : t('audience.studentsDesc')}
               </p>
             </div>
 
@@ -278,11 +300,17 @@ export const LandingHero: React.FC = () => {
               <h3 className="text-base font-bold text-stone-900 mb-1 group-hover:text-[#134E3F] transition-colors">
                 {t('audience.underservedTitle')}
               </h3>
-              <p className="text-xs font-medium text-emerald-900 mb-2">
-                {t('audience.underservedTag')}
+              <p className="text-xs font-semibold text-emerald-900 mb-2">
+                {isSimpleMode
+                  ? (language === 'hi' ? 'बिना डिग्री का स्थानीय काम' : 'No Degree Required · Local Work')
+                  : t('audience.underservedTag')}
               </p>
               <p className="text-xs text-stone-600 leading-relaxed">
-                {t('audience.underservedDesc')}
+                {isSimpleMode
+                  ? (language === 'hi'
+                      ? 'आपके पास के सुरक्षित काम। डिग्री की जरूरत नहीं, काम सिखाया जाएगा।'
+                      : 'Dignified local jobs near you. No degree required, training provided.')
+                  : t('audience.underservedDesc')}
               </p>
             </div>
 
@@ -307,11 +335,17 @@ export const LandingHero: React.FC = () => {
               <h3 className="text-base font-bold text-stone-900 mb-1 group-hover:text-[#134E3F] transition-colors">
                 {t('audience.careerSeekersTitle')}
               </h3>
-              <p className="text-xs font-medium text-amber-900 mb-2">
-                {t('audience.careerSeekersTag')}
+              <p className="text-xs font-semibold text-amber-900 mb-2">
+                {isSimpleMode
+                  ? (language === 'hi' ? '15 मिनट में हुनर सीखें' : '15-Min Skill Check & Practice')
+                  : t('audience.careerSeekersTag')}
               </p>
               <p className="text-xs text-stone-600 leading-relaxed">
-                {t('audience.careerSeekersDesc')}
+                {isSimpleMode
+                  ? (language === 'hi'
+                      ? '15 मिनट के व्यावहारिक अभ्यास करें और अपना काम साबित करें।'
+                      : 'Take 15-minute practical tasks and build demonstrable proof.')
+                  : t('audience.careerSeekersDesc')}
               </p>
             </div>
 
@@ -336,11 +370,17 @@ export const LandingHero: React.FC = () => {
               <h3 className="text-base font-bold text-stone-900 mb-1 group-hover:text-[#134E3F] transition-colors">
                 {t('audience.businessTitle')}
               </h3>
-              <p className="text-xs font-medium text-teal-900 mb-2">
-                {t('audience.businessTag')}
+              <p className="text-xs font-semibold text-teal-900 mb-2">
+                {isSimpleMode
+                  ? (language === 'hi' ? 'दुकान/सेवा दिखाएं और काम दें' : 'List Shop/Services & Post Tasks')
+                  : t('audience.businessTag')}
               </p>
               <p className="text-xs text-stone-600 leading-relaxed">
-                {t('audience.businessDesc')}
+                {isSimpleMode
+                  ? (language === 'hi'
+                      ? 'अपनी शिल्प या दुकान की सेवाएं दिखाएं और स्थानीय सहायकों को काम दें।'
+                      : 'Showcase your local craft or services and hire neighborhood help.')
+                  : t('audience.businessDesc')}
               </p>
             </div>
 

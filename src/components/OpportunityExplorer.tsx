@@ -14,6 +14,12 @@ import {
   X,
   Info,
   ShieldAlert,
+  UploadCloud,
+  FileText,
+  CheckCircle2,
+  Trash2,
+  AlertCircle,
+  FileCheck,
 } from 'lucide-react';
 import { Opportunity, OpportunityCategory, OpportunityType, WorkMode } from '../types';
 import { VoiceInputButton } from './VoiceInputButton';
@@ -87,6 +93,24 @@ export const OpportunityExplorer: React.FC = () => {
   const [applyCoverNote, setApplyCoverNote] = useState('');
   const [applyPortfolioUrl, setApplyPortfolioUrl] = useState(profile.portfolioUrl || '');
 
+  const isSimpleMode = Boolean(profile.accessibility?.simplifiedLanguage);
+
+  // Resume upload state
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeError, setResumeError] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  // Application Confirmation Modal state
+  const [submittedAppSummary, setSubmittedAppSummary] = useState<{
+    oppTitle: string;
+    organization: string;
+    resumeName?: string;
+    resumeSize?: number;
+    portfolioUrl?: string;
+    coverNote?: string;
+    date: string;
+  } | null>(null);
+
   // Filtered List with safe null checks and relevance calculation
   const filteredOpportunities = useMemo(() => {
     const q = (searchQuery || '').toLowerCase().trim();
@@ -159,12 +183,79 @@ export const OpportunityExplorer: React.FC = () => {
     onlyEquipmentProvided,
   ]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setResumeError(null);
+    if (!file) return;
+
+    // Validate type: .pdf or .docx
+    const lowerName = file.name.toLowerCase();
+    const isPdf = lowerName.endsWith('.pdf') || file.type === 'application/pdf';
+    const isDocx =
+      lowerName.endsWith('.docx') ||
+      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      file.type === 'application/msword';
+
+    if (!isPdf && !isDocx) {
+      setResumeError(t('applyModal.errorInvalidType'));
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    // Validate size: 5 MB limit
+    const MAX_SIZE_BYTES = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE_BYTES) {
+      setResumeError(t('applyModal.errorTooLarge'));
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setResumeFile(file);
+  };
+
+  const handleRemoveResume = () => {
+    setResumeFile(null);
+    setResumeError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleApplySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!oppToApply) return;
-    submitApplication(oppToApply.id, applyCoverNote, applyPortfolioUrl);
-    setOppToApply(null);
-    setApplyCoverNote('');
+    if (resumeError) return;
+    const opp = oppToApply;
+
+    const resumePayload = resumeFile
+      ? {
+          name: resumeFile.name,
+          size: resumeFile.size,
+          type: resumeFile.type,
+        }
+      : undefined;
+
+    const success = submitApplication(
+      opp.id,
+      applyCoverNote,
+      applyPortfolioUrl,
+      resumePayload
+    );
+
+    if (success) {
+      setSubmittedAppSummary({
+        oppTitle: opp.title,
+        organization: opp.organization,
+        resumeName: resumeFile?.name,
+        resumeSize: resumeFile?.size,
+        portfolioUrl: applyPortfolioUrl,
+        coverNote: applyCoverNote,
+        date: language === 'hi' ? 'अभी-अभी' : 'Just now',
+      });
+      setOppToApply(null);
+      setApplyCoverNote('');
+      setResumeFile(null);
+      setResumeError(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const hasApplied = (oppId: string) => applications.some((a) => a.opportunityId === oppId);
@@ -190,6 +281,37 @@ export const OpportunityExplorer: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Simple Mode 3-Step Action Guide */}
+      {isSimpleMode && (
+        <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 sm:p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 uppercase">
+              {t('common.simpleModeBadge')}
+            </span>
+            <h3 className="text-sm font-bold text-amber-950">
+              {language === 'hi' ? '3-चरणों में अवसर खोजें और आवेदन करें' : '3-Step Easy Guide to Find and Apply'}
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-amber-950">
+            <div className="p-3 bg-white/90 border border-amber-200/60 rounded-xl shadow-2xs">
+              <span className="font-bold text-[#134E3F] block mb-1">1.</span>
+              <p>{t('opportunities.simpleModeStep1')}</p>
+            </div>
+            <div className="p-3 bg-white/90 border border-amber-200/60 rounded-xl shadow-2xs">
+              <span className="font-bold text-[#134E3F] block mb-1">2.</span>
+              <p>{t('opportunities.simpleModeStep2')}</p>
+            </div>
+            <div className="p-3 bg-white/90 border border-amber-200/60 rounded-xl shadow-2xs">
+              <span className="font-bold text-[#134E3F] block mb-1">3.</span>
+              <p>{t('opportunities.simpleModeStep3')}</p>
+            </div>
+          </div>
+          <p className="text-[11px] text-amber-900 italic">
+            {t('opportunities.simpleModeFilterNote')}
+          </p>
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="bg-white border border-stone-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
@@ -777,9 +899,93 @@ export const OpportunityExplorer: React.FC = () => {
                     placeholder={t('applyModal.coverNotePlaceholder')}
                     className="w-full px-3 py-2 text-xs bg-white border border-stone-200 rounded-lg focus:outline-none focus:border-[#134E3F]"
                   />
+                  {isSimpleMode && (
+                    <p className="text-[11px] text-amber-900 bg-amber-50/80 p-2 rounded-lg border border-amber-200/60 mt-1">
+                      {t('applyModal.simpleCoverNoteHelp')}
+                    </p>
+                  )}
                 </div>
 
-                {/* Portfolio Link */}
+                {/* Resume Upload Field (PDF & DOCX, Max 5MB) */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-stone-700">
+                      {t('applyModal.resumeUploadLabel')}
+                    </label>
+                    <span className="text-[11px] text-stone-500 bg-stone-100 px-2 py-0.5 rounded">
+                      {t('applyModal.resumeOptionalBadge')}
+                    </span>
+                  </div>
+
+                  <input
+                    ref={fileInputRef}
+                    id="resume-file-input"
+                    type="file"
+                    accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+
+                  {!resumeFile ? (
+                    <label
+                      htmlFor="resume-file-input"
+                      className="group cursor-pointer border-2 border-dashed border-stone-300 hover:border-[#134E3F] hover:bg-stone-50/80 rounded-xl p-3.5 flex flex-col items-center justify-center text-center transition-all"
+                    >
+                      <UploadCloud className="w-5 h-5 text-stone-400 group-hover:text-[#134E3F] mb-1 transition-colors" />
+                      <span className="text-xs font-semibold text-stone-700 group-hover:text-[#134E3F]">
+                        {t('applyModal.resumeFileHint')}
+                      </span>
+                      <span className="text-[11px] text-stone-400 mt-0.5">
+                        PDF or DOCX · 5 MB limit
+                      </span>
+                    </label>
+                  ) : (
+                    <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <FileCheck className="w-5 h-5 text-emerald-700 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-stone-900 truncate">
+                            {resumeFile.name}
+                          </p>
+                          <p className="text-[11px] text-stone-500">
+                            {(resumeFile.size / (1024 * 1024)).toFixed(2)} MB · {resumeFile.name.endsWith('.pdf') ? 'PDF Document' : 'DOCX Document'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <label
+                          htmlFor="resume-file-input"
+                          className="cursor-pointer text-[11px] font-semibold text-stone-600 hover:text-stone-900 px-2.5 py-1 bg-white border border-stone-200 rounded-md hover:bg-stone-50 transition-colors"
+                        >
+                          {t('applyModal.replaceResume')}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleRemoveResume}
+                          className="text-[11px] font-semibold text-rose-700 hover:text-rose-900 px-2 py-1 bg-white border border-rose-200 rounded-md hover:bg-rose-50 transition-colors flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>{t('applyModal.removeResume')}</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {resumeError && (
+                    <div className="flex items-center gap-2 p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                      <span>{resumeError}</span>
+                    </div>
+                  )}
+
+                  {isSimpleMode && (
+                    <p className="text-[11px] text-amber-900 bg-amber-50/80 p-2 rounded-lg border border-amber-200/60">
+                      {t('applyModal.simpleResumeHelp')}
+                    </p>
+                  )}
+                </div>
+
+                {/* Portfolio Link (Optional Separate Field) */}
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 mb-1">
                     {t('applyModal.portfolioLabel')}
@@ -793,21 +999,28 @@ export const OpportunityExplorer: React.FC = () => {
                   />
                 </div>
 
-                <div className="p-2.5 bg-amber-50/70 border border-amber-200/80 rounded-lg text-[11px] text-amber-800 leading-snug">
-                  {t('applyModal.disclaimerNotice')}
+                {/* Demo Storage Disclaimer Notice */}
+                <div className="p-2.5 bg-stone-100 border border-stone-200 rounded-lg text-[11px] text-stone-700 leading-snug flex items-start gap-2">
+                  <ShieldAlert className="w-4 h-4 text-stone-500 shrink-0 mt-0.5" />
+                  <p>{t('applyModal.storageDisclaimerNotice')}</p>
                 </div>
 
                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-200">
                   <button
                     type="button"
-                    onClick={() => setOppToApply(null)}
+                    onClick={() => {
+                      setOppToApply(null);
+                      setResumeFile(null);
+                      setResumeError(null);
+                    }}
                     className="px-3 py-2 text-xs font-medium text-stone-600 hover:text-stone-900"
                   >
                     {t('common.cancel')}
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 text-xs font-semibold text-white bg-[#134E3F] hover:bg-[#0E3B30] rounded-lg transition-colors shadow-sm"
+                    disabled={Boolean(resumeError)}
+                    className="px-5 py-2 text-xs font-semibold text-white bg-[#134E3F] hover:bg-[#0E3B30] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
                   >
                     {t('applyModal.submitButton')}
                   </button>
@@ -817,6 +1030,93 @@ export const OpportunityExplorer: React.FC = () => {
           </div>
         );
       })()}
+
+      {/* Application Success Confirmation State Modal */}
+      {submittedAppSummary && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[#FBF9F5] border border-stone-200 rounded-2xl max-w-md w-full shadow-2xl p-6 space-y-5 animate-in fade-in">
+            <div className="text-center space-y-2">
+              <div className="w-12 h-12 bg-emerald-100 text-[#134E3F] rounded-full mx-auto flex items-center justify-center shadow-xs">
+                <CheckCircle2 className="w-7 h-7" />
+              </div>
+              <h3 className="text-base sm:text-lg font-bold text-stone-900">
+                {t('applyModal.confirmationTitle')}
+              </h3>
+              <p className="text-xs text-stone-600">
+                {t('applyModal.confirmationSubtitle')}
+              </p>
+            </div>
+
+            <div className="bg-white border border-stone-200 rounded-xl p-4 space-y-2.5 text-xs">
+              <div className="flex justify-between items-center pb-2 border-b border-stone-100">
+                <span className="text-stone-500">{t('applyModal.confirmationOppLabel')}</span>
+                <span className="font-bold text-stone-900 text-right">{submittedAppSummary.oppTitle}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-stone-100">
+                <span className="text-stone-500">{t('applyModal.confirmationOrgLabel')}</span>
+                <span className="font-semibold text-stone-800">{submittedAppSummary.organization}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-stone-100">
+                <span className="text-stone-500">{t('applyModal.confirmationDateLabel')}</span>
+                <span className="text-stone-700">{submittedAppSummary.date}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-stone-100">
+                <span className="text-stone-500">{t('applyModal.confirmationResumeLabel')}</span>
+                <span className="font-medium text-emerald-800 text-right truncate max-w-[200px]">
+                  {submittedAppSummary.resumeName ? (
+                    <span className="inline-flex items-center gap-1">
+                      <FileText className="w-3.5 h-3.5" />
+                      {submittedAppSummary.resumeName}
+                    </span>
+                  ) : (
+                    <span className="text-stone-500">{t('applyModal.confirmationNoResume')}</span>
+                  )}
+                </span>
+              </div>
+              {submittedAppSummary.portfolioUrl && (
+                <div className="flex justify-between items-center">
+                  <span className="text-stone-500">{t('applyModal.confirmationPortfolioLabel')}</span>
+                  <a
+                    href={submittedAppSummary.portfolioUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[#134E3F] hover:underline truncate max-w-[200px]"
+                  >
+                    {submittedAppSummary.portfolioUrl}
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <div className="p-2.5 bg-amber-50/80 border border-amber-200/80 rounded-lg text-[11px] text-amber-900 leading-snug">
+              <span>{language === 'hi' ? 'सत्र स्थिति:' : 'Session Storage:'}</span>{' '}
+              {language === 'hi'
+                ? 'यह आवेदन आपके स्थानीय ब्राउज़र डेमो सत्र में सुरक्षित रूप से दर्ज कर दिया गया है। क्लाउड बैकएंड कॉन्फ़िगर नहीं है।'
+                : 'Application and attached resume details are securely stored in your local browser demo session. Cloud backend unconfigured.'}
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSubmittedAppSummary(null);
+                  setCurrentView('dashboard');
+                }}
+                className="w-full py-2 px-4 text-xs font-semibold text-white bg-[#134E3F] hover:bg-[#0E3B30] rounded-lg shadow-sm transition-colors text-center"
+              >
+                {t('applyModal.confirmationViewDashboard')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSubmittedAppSummary(null)}
+                className="w-full sm:w-auto py-2 px-4 text-xs font-medium text-stone-700 hover:bg-stone-100 rounded-lg transition-colors text-center border border-stone-200"
+              >
+                {t('applyModal.confirmationClose')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

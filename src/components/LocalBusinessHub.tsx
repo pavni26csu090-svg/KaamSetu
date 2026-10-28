@@ -20,6 +20,7 @@ export const LocalBusinessHub: React.FC = () => {
     generateSimulatedEnquiry,
     language,
     t,
+    profile,
   } = useApp();
 
   // Sub-tabs
@@ -149,6 +150,46 @@ export const LocalBusinessHub: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Simple Mode Micro-Enterprise Guide */}
+      {Boolean(profile.accessibility?.simplifiedLanguage) && (
+        <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 sm:p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 uppercase">
+              {t('common.simpleModeBadge')}
+            </span>
+            <h3 className="text-sm font-bold text-amber-950">
+              {language === 'hi' ? 'स्थानीय व्यापार के लिए 3 सरल कदम' : '3 Easy Steps for Local Business'}
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-amber-950">
+            <div className="p-3 bg-white/90 border border-amber-200/60 rounded-xl shadow-2xs">
+              <span className="font-bold text-[#134E3F] block mb-1">1.</span>
+              <p>
+                {language === 'hi'
+                  ? 'अपनी सेवाएं या उत्पाद जोड़ें ताकि ग्राहक उन्हें देख सकें।'
+                  : 'Add your services or items with simple prices so local buyers can browse.'}
+              </p>
+            </div>
+            <div className="p-3 bg-white/90 border border-amber-200/60 rounded-xl shadow-2xs">
+              <span className="font-bold text-[#134E3F] block mb-1">2.</span>
+              <p>
+                {language === 'hi'
+                  ? 'ग्राहकों के सवालों का 1-क्लिक में उत्तर दें।'
+                  : 'Reply to simulated or real customer queries with courteous answers.'}
+              </p>
+            </div>
+            <div className="p-3 bg-white/90 border border-amber-200/60 rounded-xl shadow-2xs">
+              <span className="font-bold text-[#134E3F] block mb-1">3.</span>
+              <p>
+                {language === 'hi'
+                  ? 'स्थानीय सहायकों के लिए छोटे काम या दैनिक गिग पोस्ट करें।'
+                  : 'Post short-term helper gigs or weekend tasks for neighborhood youth.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sub-Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-stone-200 pb-2 overflow-x-auto text-xs">

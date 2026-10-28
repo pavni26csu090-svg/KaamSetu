@@ -59,8 +59,10 @@ export const SkillBridge: React.FC = () => {
   const locActiveSkill = getLocalizedSkill(activeSkill, language);
   const locSelectedOpp = selectedOpp ? getLocalizedOpp(selectedOpp, language) : null;
 
+  const isSimpleMode = Boolean(profile.accessibility?.simplifiedLanguage);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 text-xs font-semibold text-[#134E3F] tracking-wide uppercase mb-1">
@@ -75,6 +77,46 @@ export const SkillBridge: React.FC = () => {
           {t('skillbridge.subtitle')}
         </p>
       </div>
+
+      {/* Simple Mode 3-Step Guide */}
+      {isSimpleMode && (
+        <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 sm:p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 uppercase">
+              {t('common.simpleModeBadge')}
+            </span>
+            <h3 className="text-sm font-bold text-amber-950">
+              {language === 'hi' ? 'कौशल सीखने का सरल 3-चरणीय तरीका' : 'Simple 3-Step Learning Process'}
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-amber-950">
+            <div className="p-3 bg-white/90 border border-amber-200/60 rounded-xl shadow-2xs">
+              <span className="font-bold text-[#134E3F] block mb-1">1.</span>
+              <p>
+                {language === 'hi'
+                  ? 'ऊपर अपनी लक्षित नौकरी चुनें और देखें कि कौन से कौशल बाकी हैं।'
+                  : 'Select your target job above to see which required skills you already have or need to bridge.'}
+              </p>
+            </div>
+            <div className="p-3 bg-white/90 border border-amber-200/60 rounded-xl shadow-2xs">
+              <span className="font-bold text-[#134E3F] block mb-1">2.</span>
+              <p>
+                {language === 'hi'
+                  ? 'बाकी कौशल पर क्लिक करें और 3 आसान सीखने के चरणों को पढ़ें।'
+                  : 'Click on any missing skill and read the 3 actionable learning steps.'}
+              </p>
+            </div>
+            <div className="p-3 bg-white/90 border border-amber-200/60 rounded-xl shadow-2xs">
+              <span className="font-bold text-[#134E3F] block mb-1">3.</span>
+              <p>
+                {language === 'hi'
+                  ? '15 मिनट का हैंड्स-ऑन अभ्यास पूरा करें और अपने पोर्टफोलियो में जोड़ें।'
+                  : 'Complete the 15-minute hands-on challenge and save proof to your portfolio.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 1. Skill Gap Analysis Box */}
       <div className="bg-white border border-stone-200/90 rounded-2xl p-6 shadow-xs space-y-5">

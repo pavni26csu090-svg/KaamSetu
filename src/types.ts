@@ -92,6 +92,10 @@ export interface Application {
   status: 'submitted' | 'under_review' | 'interview_practice' | 'offer_received';
   notes: string;
   portfolioLink?: string;
+  resumeFileName?: string;
+  resumeFileSize?: number;
+  resumeFileType?: string;
+  resumeDemoStorage?: boolean;
 }
 
 export interface PracticalChallenge {

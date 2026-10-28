@@ -10,6 +10,7 @@ import {
   Plus,
   Sparkles,
   X,
+  FileText,
 } from 'lucide-react';
 import { getLocalizedOpp, getLocalizedSkill } from '../utils/localization';
 import {
@@ -241,7 +242,7 @@ export const Dashboard: React.FC = () => {
                     key={app.id}
                     className="p-4 bg-stone-50/70 border border-stone-200 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
                   >
-                    <div className="space-y-1">
+                    <div className="space-y-1.5 flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h4 className="text-xs font-bold text-stone-900">
                           {app.opportunityTitle}
@@ -251,6 +252,37 @@ export const Dashboard: React.FC = () => {
                       <p className="text-[11px] text-stone-600 line-clamp-1">
                         {t('dashboard.appliedAtLabel', { date: app.appliedAt, notes: app.notes || '' })}
                       </p>
+                      {/* Attached Resume Chip */}
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                        {app.resumeFileName ? (
+                          <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-900 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                            <FileText className="w-3 h-3 text-emerald-700" />
+                            <span>{app.resumeFileName}</span>
+                            {app.resumeFileSize && (
+                              <span className="text-stone-500 font-normal">
+                                ({(app.resumeFileSize / (1024 * 1024)).toFixed(2)} MB)
+                              </span>
+                            )}
+                            <span className="text-[9px] bg-emerald-200/60 text-emerald-900 px-1 py-0.2 rounded font-mono">
+                              Demo Session
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-stone-400 italic">
+                            {isHi ? 'कोई बायोडाटा संलग्न नहीं' : 'No resume attached'}
+                          </span>
+                        )}
+                        {app.portfolioLink && (
+                          <a
+                            href={app.portfolioLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[10px] text-[#134E3F] hover:underline truncate max-w-[200px]"
+                          >
+                            🔗 {app.portfolioLink}
+                          </a>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
