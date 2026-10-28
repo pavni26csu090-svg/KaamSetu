@@ -9,10 +9,21 @@ import { AICareerCompanion } from './components/AICareerCompanion';
 import { LocalBusinessHub } from './components/LocalBusinessHub';
 import { Dashboard } from './components/Dashboard';
 import { OnboardingModal } from './components/OnboardingModal';
+import { VoiceCommandModal } from './components/VoiceCommandModal';
 import { ToastContainer } from './components/Toast';
 
 const AppContent: React.FC = () => {
-  const { currentView, profile, updateProfile, t, language } = useApp();
+  const {
+    currentView,
+    profile,
+    updateProfile,
+    t,
+    language,
+    showVoiceModal,
+    closeVoiceModal,
+    startVoiceListeningImmediately,
+    voiceInitialQuery,
+  } = useApp();
   const isSimpleMode = Boolean(profile.accessibility?.simplifiedLanguage);
 
   return (
@@ -71,6 +82,12 @@ const AppContent: React.FC = () => {
 
       {/* Global Modals & Notifications */}
       <OnboardingModal />
+      <VoiceCommandModal
+        isOpen={showVoiceModal}
+        onClose={closeVoiceModal}
+        startListeningOnInit={startVoiceListeningImmediately}
+        initialQuery={voiceInitialQuery}
+      />
       <ToastContainer />
 
       {/* Footer */}

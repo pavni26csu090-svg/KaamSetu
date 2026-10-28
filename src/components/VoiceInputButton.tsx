@@ -1,103 +1,47 @@
-import React, { useState } from 'react';
-import { Mic, MicOff } from 'lucide-react';
+import React from 'react';
+import { Mic } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 interface VoiceInputButtonProps {
-  onTranscript: (text: string) => void;
+  onTranscript?: (text: string) => void;
   className?: string;
   lang?: string;
+  initialQuery?: string;
+  mode?: 'modal' | 'inline';
+  ariaLabel?: string;
 }
 
 export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
   onTranscript,
   className = '',
-  lang,
+  initialQuery = '',
+  mode = 'modal',
+  ariaLabel,
 }) => {
-  const { profile, addToast } = useApp();
-  const [isListening, setIsListening] = useState(false);
+  const { openVoiceModal, profile } = useApp();
 
-  const targetLang = lang || (profile.language === 'hi' ? 'hi-IN' : 'en-IN');
-
-  const handleToggleVoice = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      addToast({
-        type: 'warning',
-        title: 'Voice Input Unavailable',
-        description: 'Your browser does not support Web Speech recognition. Please use standard text input.',
-      });
-      return;
-    }
-
-    if (isListening) {
-      setIsListening(false);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = targetLang;
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onstart = () => {
-        setIsListening(true);
-        addToast({
-          type: 'info',
-          title: 'Listening...',
-          description: profile.language === 'hi' ? 'कृपया बोलें (हिंदी/English)' : 'Please speak clearly now',
-        });
-      };
-
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          onTranscript(transcript);
-          addToast({
-            type: 'success',
-            title: 'Voice Recognized',
-            description: `"${transcript}"`,
-          });
-        }
-        setIsListening(false);
-      };
-
-      recognition.onerror = (e: any) => {
-        console.warn('Speech recognition error', e);
-        setIsListening(false);
-        addToast({
-          type: 'warning',
-          title: 'Could not catch voice',
-          description: 'Try speaking again or type into the input field.',
-        });
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.start();
-    } catch (err) {
-      console.warn('Failed to start speech recognition', err);
-      setIsListening(false);
-    }
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Opens the dedicated accessible Voice Command modal with microphone listening started
+    openVoiceModal(initialQuery, true);
   };
+
+  const label =
+    ariaLabel ||
+    (profile.language === 'hi'
+      ? 'वॉइस सर्च और बोलकर अवसर खोजें'
+      : 'Voice search and natural speech commands');
 
   return (
     <button
       type="button"
-      onClick={handleToggleVoice}
-      title={isListening ? 'Stop listening' : 'Speak using microphone'}
-      className={`p-2 rounded-lg transition-colors flex items-center justify-center ${
-        isListening
-          ? 'bg-rose-100 text-rose-700 ring-2 ring-rose-500 animate-pulse'
-          : 'bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-900'
-      } ${className}`}
-      aria-label="Toggle voice input"
+      onClick={handleClick}
+      title={profile.language === 'hi' ? 'बोलकर खोजें (हिंदी/English)' : 'Speak naturally to search opportunities'}
+      className={`p-2 rounded-xl transition-all flex items-center justify-center bg-stone-100 text-stone-700 hover:bg-[#134E3F] hover:text-amber-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#134E3F] shadow-2xs ${className}`}
+      aria-label={label}
     >
-      {isListening ? <MicOff className="w-4 h-4 text-rose-600" /> : <Mic className="w-4 h-4" />}
+      <Mic className="w-4 h-4 transition-transform group-hover:scale-110" />
     </button>
   );
 };

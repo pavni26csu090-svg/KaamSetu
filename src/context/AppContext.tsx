@@ -87,6 +87,13 @@ interface AppContextType {
   showOnboardingModal: boolean;
   setShowOnboardingModal: (show: boolean) => void;
 
+  showVoiceModal: boolean;
+  setShowVoiceModal: (show: boolean) => void;
+  openVoiceModal: (initialQuery?: string, startListening?: boolean) => void;
+  closeVoiceModal: () => void;
+  voiceInitialQuery: string;
+  startVoiceListeningImmediately: boolean;
+
   aiRoadmap: AIRoadmap | null;
   setAiRoadmap: (roadmap: AIRoadmap | null) => void;
   toggleRoadmapStep: (stepId: string) => void;
@@ -283,6 +290,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedOpportunityForDetail, setSelectedOpportunityForDetail] = useState<Opportunity | null>(null);
   const [selectedOpportunityForSkillBridge, setSelectedOpportunityForSkillBridge] = useState<Opportunity | null>(null);
   const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(false);
+
+  // Voice Command Modal State
+  const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
+  const [voiceInitialQuery, setVoiceInitialQuery] = useState<string>('');
+  const [startVoiceListeningImmediately, setStartVoiceListeningImmediately] = useState<boolean>(false);
+
+  const openVoiceModal = (initialQuery: string = '', startListening: boolean = false) => {
+    setVoiceInitialQuery(initialQuery);
+    setStartVoiceListeningImmediately(startListening);
+    setShowVoiceModal(true);
+  };
+
+  const closeVoiceModal = () => {
+    setShowVoiceModal(false);
+    setVoiceInitialQuery('');
+    setStartVoiceListeningImmediately(false);
+  };
 
   // 9. Toast System
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -810,6 +834,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         showOnboardingModal,
         setShowOnboardingModal,
+
+        showVoiceModal,
+        setShowVoiceModal,
+        openVoiceModal,
+        closeVoiceModal,
+        voiceInitialQuery,
+        startVoiceListeningImmediately,
 
         aiRoadmap,
         setAiRoadmap,

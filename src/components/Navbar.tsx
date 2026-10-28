@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Menu, X, Globe, User, BookOpen, Compass, Sparkles, Store, LayoutDashboard } from 'lucide-react';
+import { Menu, X, Globe, User, BookOpen, Compass, Sparkles, Store, LayoutDashboard, Mic } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { currentView, setCurrentView, language, setLanguage, t, setShowOnboardingModal, profile, updateProfile } = useApp();
+  const {
+    currentView,
+    setCurrentView,
+    language,
+    setLanguage,
+    t,
+    setShowOnboardingModal,
+    openVoiceModal,
+    profile,
+    updateProfile,
+  } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const toggleLang = () => {
@@ -77,6 +87,17 @@ export const Navbar: React.FC = () => {
               <span>{language === 'en' ? 'हिन्दी' : 'English'}</span>
             </button>
 
+            {/* Voice Command & Search Quick Button */}
+            <button
+              onClick={() => openVoiceModal('', true)}
+              className="px-2.5 py-1.5 text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-[#134E3F] hover:text-amber-200 rounded-md transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-2xs"
+              title={language === 'hi' ? 'बोलकर खोजें' : 'Voice Search & Commands'}
+              aria-label="Voice Search"
+            >
+              <Mic className="w-3.5 h-3.5 text-amber-700" />
+              <span className="hidden md:inline">{language === 'hi' ? 'बोलें' : 'Voice'}</span>
+            </button>
+
             {/* Accessibility Quick Toggle for Simplified Language */}
             <button
               onClick={() =>
@@ -144,6 +165,16 @@ export const Navbar: React.FC = () => {
               </button>
             );
           })}
+          <button
+            onClick={() => {
+              openVoiceModal('', true);
+              setMobileMenuOpen(false);
+            }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg text-left bg-stone-100 hover:bg-[#134E3F] hover:text-white transition-colors text-stone-800 font-semibold"
+          >
+            <Mic className="w-4 h-4 text-amber-700 shrink-0" />
+            <span>{language === 'hi' ? 'वॉइस सर्च (बोलकर खोजें)' : 'Voice Command & Search'}</span>
+          </button>
           <div className="pt-2 border-t border-stone-200 flex items-center justify-between">
             <button
               onClick={() =>
