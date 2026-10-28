@@ -1,0 +1,6 @@
+{
+  "name": "KaamSetu",
+  "description": "A unified employment-tech platform connecting learners, job seekers, and local entrepreneurs to meaningful work, skill bridge roadmaps, and career growth.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
